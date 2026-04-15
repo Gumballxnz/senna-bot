@@ -1,0 +1,11 @@
+node_modules
+.env
+database.json
+database_backup.json
+npm-debug.log
+sessions
+package-lock.json
+tmp/
+plugins_backup/
+*.key
+*.pem
