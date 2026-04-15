@@ -1,27 +1,26 @@
  
 <p align="center"> 
-<img src="https://komarev.com/ghpvc/?username=fg-error&color=brightgreen" />
+<img src="https://komarev.com/ghpvc/?username=Gumballxnz&color=brightgreen" />
 <p/>
 <p align="center">
-<a href="https://github.com/fg-error"><img title="Author" src="https://img.shields.io/badge/Senna Bot-black?style=for-the-badge&logo=whatsApp"></a>
+<a href="https://github.com/Gumballxnz"><img title="Author" src="https://img.shields.io/badge/DYLUX BOT S2-black?style=for-the-badge&logo=whatsApp"></a>
 <p/>
 <p align="center">
-<a href="https://github.com/fg-error?tab=followers"><img title="Followers" src="https://img.shields.io/github/followers/fg-error?label=Followers&style=social"></a>
-<a href="https://github.com/fg-error/senna-bot/stargazers/"><img title="Stars" src="https://img.shields.io/github/stars/fg-error/senna-bot?&style=social"></a>
-<a href="https://github.com/fg-error/senna-bot/network/members"><img title="Fork" src="https://img.shields.io/github/forks/fg-error/senna-bot?style=social"></a>
-<a href="https://github.com/fg-error/senna-bot/watchers"><img title="Watching" src="https://img.shields.io/github/watchers/fg-error/senna-bot?label=Watching&style=social"></a>
+<a href="https://github.com/Gumballxnz?tab=followers"><img title="Followers" src="https://img.shields.io/github/followers/Gumballxnz?label=Followers&style=social"></a>
+<a href="https://github.com/Gumballxnz/senna-bot/stargazers/"><img title="Stars" src="https://img.shields.io/github/stars/Gumballxnz/senna-bot?&style=social"></a>
+<a href="https://github.com/Gumballxnz/senna-bot/network/members"><img title="Fork" src="https://img.shields.io/github/forks/Gumballxnz/senna-bot?style=social"></a>
+<a href="https://github.com/Gumballxnz/senna-bot/watchers"><img title="Watching" src="https://img.shields.io/github/watchers/Gumballxnz/senna-bot?label=Watching&style=social"></a>
 </p>
 
-<h3 align="center">WHATSAPP BOT</h3>
+<h3 align="center">DYLUX BOT S2 — WHATSAPP BOT</h3>
 
 ***
-### Información
-- Cambie número de dueño en [Config](https://github.com/fg-error/senna-bot/blob/main/config.js#L6)
-- 
-### Ejemplo 
-En caso de duda, antes de instalar senna-bot, pruebe el bot aquí
+### Informação
+- Mude o número de dono em [Config](https://github.com/Gumballxnz/senna-bot/blob/main/config.js#L6)
+- Código base criado por FG98 (GPL-3.0)
 
-[![WhatsApp](https://img.shields.io/badge/DyLux-25D366?style=for-the-badge&logo=whatsapp&logoColor=white)](https://instabio.cc/fg98ff) 
+### Contacto
+[![WhatsApp](https://img.shields.io/badge/WhatsApp-25D366?style=for-the-badge&logo=whatsapp&logoColor=white)](https://wa.me/258879116693) 
 
 ### TERMUX
 1. 
@@ -31,12 +30,12 @@ $ pkg install git -y
 $ pkg install nodejs -y
 $ pkg install ffmpeg -y
 $ pkg install imagemagick -y
-$ git clone https://github.com/fg-error/senna-bot
+$ git clone https://github.com/Gumballxnz/senna-bot
 $ cd senna-bot
 $ npm i 
 $ npm start
 ```
-2. Esperar a que se inicie el bot...
+2. Esperar que o bot inicie...
 3. Ir a Dispositivos vinculados > vincular 
-un dispositivo > Vincular con Numero de telefono 
+um dispositivo > Vincular com número de telefone 
 ---------

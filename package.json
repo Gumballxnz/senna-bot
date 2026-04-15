@@ -5,16 +5,16 @@
   "main": "index.js",
   "type": "module",
   "author": {
-    "name": "FG98"
+    "name": "Gumball"
   },
   "license": "GPL-3.0-or-later",
-  "homepage": "https://github.com/fg-error/senna-bot",
+  "homepage": "https://github.com/Gumballxnz/senna-bot",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/fg-error/senna-bot.git"
+    "url": "git+https://github.com/Gumballxnz/senna-bot.git"
   },
   "bugs": {
-    "url": "https://github.com/fg-error/senna/issues"
+    "url": "https://github.com/Gumballxnz/senna-bot/issues"
   },
   "directories": {
     "lib": "lib",

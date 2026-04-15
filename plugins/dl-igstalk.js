@@ -2,7 +2,7 @@
 import fetch from 'node-fetch'
 let handler= async (m, { conn, args, text, usedPrefix, command }) => {
 	
-    if (!args[0]) throw `📌Exemplo : ${usedPrefix + command} fg.error` 
+    if (!args[0]) throw `📌Exemplo : ${usedPrefix + command} Gumball.xnz` 
     try {
     let pon = await fetch(global.API('fgmods', '/api/search/igstalk', { username: args[0] }, 'apikey'))
     let res = await pon.json()
