@@ -1,4 +1,4 @@
- 
+
 let handler = async (m, { conn, usedPrefix, command, args, isOwner, isAdmin, isROwner }) => {
 
   let isEnable = /true|enable|(turn)?on|1/i.test(command)
@@ -7,167 +7,147 @@ let handler = async (m, { conn, usedPrefix, command, args, isOwner, isAdmin, isR
   let bot = global.db.data.settings[conn.user.jid] || {}
   let type = (args[0] || '').toLowerCase()
   let isAll = false, isUser = false
+  
+  // Função para verificar se já está no estado desejado
+  const checkState = (current) => {
+    if (isEnable && current) return `⚠️ *${type.toUpperCase()}* já está *Ativado* neste grupo!`
+    if (!isEnable && !current) return `⚠️ *${type.toUpperCase()}* já está *Desativado* neste grupo!`
+    return null
+  }
+
+  let statusMsg = null
+
   switch (type) {
     case 'welcome':
     case 'bv':
     case 'bienvenida':
-      if (!m.isGroup) {
-        if (!isOwner) {
-          global.dfail('group', m, conn)
-          throw false
-        }
-      } else if (!isAdmin) {
-        global.dfail('admin', m, conn)
-        throw false
-      }
+      if (m.isGroup && !isAdmin) return global.dfail('admin', m, conn)
+      if (!m.isGroup && !isOwner) return global.dfail('group', m, conn)
+      statusMsg = checkState(chat.welcome)
+      if (statusMsg) return m.reply(statusMsg)
       chat.welcome = isEnable
       break
       
-      case 'detect':
-      case 'detector':
-        if (!m.isGroup) {
-         if (!isOwner) {
-           global.dfail('group', m, conn)
-          throw false
-        }
-       } else if (!isAdmin) {
-         global.dfail('admin', m, conn)
-         throw false
-       }
-       chat.detect = isEnable
-     break
+    case 'detect':
+    case 'detector':
+      if (m.isGroup && !isAdmin) return global.dfail('admin', m, conn)
+      if (!m.isGroup && !isOwner) return global.dfail('group', m, conn)
+      statusMsg = checkState(chat.detect)
+      if (statusMsg) return m.reply(statusMsg)
+      chat.detect = isEnable
+      break
     
     case 'antidelete':
     case 'delete':
-      if (m.isGroup) {
-        if (!(isAdmin || isOwner)) {
-          global.dfail('admin', m, conn)
-          throw false
-        }
-      }
+      if (m.isGroup && !(isAdmin || isOwner)) return global.dfail('admin', m, conn)
+      // Nota: o sistema original usa chat.delete = !isEnable para antidelete
+      statusMsg = checkState(!chat.delete) 
+      if (statusMsg) return m.reply(statusMsg)
       chat.delete = !isEnable
       break
 
     case 'document':
     case 'documento':
-    if (m.isGroup) {
-        if (!(isAdmin || isOwner)) return dfail('admin', m, conn)
-      }
-    chat.useDocument = isEnable
-    break
+      if (m.isGroup && !(isAdmin || isOwner)) return global.dfail('admin', m, conn)
+      statusMsg = checkState(chat.useDocument)
+      if (statusMsg) return m.reply(statusMsg)
+      chat.useDocument = isEnable
+      break
+
     case 'public':
     case 'publico':
       isAll = true
-      if (!isROwner) {
-        global.dfail('rowner', m, conn)
-        throw false
-      }
+      if (!isROwner) return global.dfail('rowner', m, conn)
+      statusMsg = checkState(!global.opts['self'])
+      if (statusMsg) return m.reply(statusMsg.replace('neste grupo', 'no bot'))
       global.opts['self'] = !isEnable
       break
+
     case 'antilink':
     case 'antilinkwa':
     case 'antilinkwha':
-      if (m.isGroup) {
-        if (!(isAdmin || isOwner)) {
-          global.dfail('admin', m, conn)
-          throw false
-        }
-      }
+      if (m.isGroup && !(isAdmin || isOwner)) return global.dfail('admin', m, conn)
+      statusMsg = checkState(chat.antiLink)
+      if (statusMsg) return m.reply(statusMsg)
       chat.antiLink = isEnable
       break
       
-      
-      case 'captcha':
-      if (m.isGroup) {
-        if (!(isAdmin || isOwner)) {
-          global.dfail('admin', m, conn)
-          throw false
-        }
-      }
+    case 'captcha':
+      if (m.isGroup && !(isAdmin || isOwner)) return global.dfail('admin', m, conn)
+      statusMsg = checkState(chat.captcha)
+      if (statusMsg) return m.reply(statusMsg)
       chat.captcha = isEnable
       break
-      case 'antibotclone':
-      if (m.isGroup) {
-        if (!(isAdmin || isOwner)) {
-          global.dfail('admin', m, conn)
-          throw false
-        }
-      }
+
+    case 'antibotclone':
+      if (m.isGroup && !(isAdmin || isOwner)) return global.dfail('admin', m, conn)
+      statusMsg = checkState(chat.antiBotClone)
+      if (statusMsg) return m.reply(statusMsg)
       chat.antiBotClone = isEnable
       break
       
-      case 'nsfw':
-      case '+18':
-       if (m.isGroup) {
-         if (!(isAdmin || isOwner)) {
-           global.dfail('admin', m, conn)
-            throw false
-           }}
-    chat.nsfw = isEnable          
-    break
+    case 'nsfw':
+    case '+18':
+      if (m.isGroup && !(isAdmin || isOwner)) return global.dfail('admin', m, conn)
+      statusMsg = checkState(chat.nsfw)
+      if (statusMsg) return m.reply(statusMsg)
+      chat.nsfw = isEnable          
+      break
 
     case 'autolevelup':
-    isUser = true
-     user.autolevelup = isEnable
-     break
-     
-     case 'chatbot':
-     case 'autosimi':
-     case 'autosimsimi':
       isUser = true
+      statusMsg = checkState(user.autolevelup)
+      if (statusMsg) return m.reply(statusMsg.replace('neste grupo', 'para você'))
+      user.autolevelup = isEnable
+      break
+      
+    case 'chatbot':
+    case 'autosimi':
+      isUser = true
+      statusMsg = checkState(user.chatbot)
+      if (statusMsg) return m.reply(statusMsg.replace('neste grupo', 'para você'))
       user.chatbot = isEnable
-     break
-     
+      break
+      
     case 'restrict':
     case 'restringir':
       isAll = true
-      if (!isOwner) {
-        global.dfail('owner', m, conn)
-        throw false
-      }
+      if (!isOwner) return global.dfail('owner', m, conn)
+      statusMsg = checkState(bot.restrict)
+      if (statusMsg) return m.reply(statusMsg.replace('neste grupo', 'no bot'))
       bot.restrict = isEnable
       break
     
     case 'onlypv':
-    case 'onlydm':
-    case 'onlymd':
-    case 'solopv':
       isAll = true
-      if (!isOwner) {
-        global.dfail('owner', m, conn)
-        throw false
-      }
-      //global.opts['solopv'] = isEnable
+      if (!isOwner) return global.dfail('owner', m, conn)
+      statusMsg = checkState(bot.solopv)
+      if (statusMsg) return m.reply(statusMsg.replace('neste grupo', 'no bot'))
       bot.solopv = isEnable
       break
       
     case 'sologp':
-    case 'sologrupo':
       isAll = true
-      if (!isOwner) {
-        global.dfail('owner', m, conn)
-        throw false
-      }
-      //global.opts['sologp'] = isEnable
+      if (!isOwner) return global.dfail('owner', m, conn)
+      statusMsg = checkState(bot.sologp)
+      if (statusMsg) return m.reply(statusMsg.replace('neste grupo', 'no bot'))
       bot.sologp = isEnable
       break
       
-      break
-      
     default:
-      //if (!/[01]/.test(command)) return await conn.sendMessage(m.chat, listMessage, { quoted: m })
       if (!/[01]/.test(command)) return m.reply(`
-≡ Lista de Opciones
+≡ *LISTA DE OPÇÕES*
 
 ┌─⊷ *ADMIN*
-▢ captcha
 ▢ welcome
 ▢ antilink
 ▢ detect 
 ▢ document
 ▢ nsfw
+▢ antidelete
+▢ captcha
 └───────────── 
-┌─⊷ *USERS*
+┌─⊷ *USUÁRIOS*
 ▢ autolevelup
 ▢ chatbot 
 └─────────────
@@ -177,19 +157,20 @@ let handler = async (m, { conn, usedPrefix, command, args, isOwner, isAdmin, isR
 ▢ solopv
 ▢ sologp
 └─────────────
-*📌 Exemplo :*
+
+*📌 Exemplo:*
 *${usedPrefix}on* welcome
 *${usedPrefix}off* welcome
-`, null, fwc)
+`.trim(), null, fwc)
       throw false
-}
+  }
 
-m.reply(`
-✅ *${type.toUpperCase()}* *${isEnable ? `Activado` : `Desactivado`}* ${isAll ? `Para este bot` : isUser ? '' : `Para este grupo`}
-`, null, fwc) 
+  m.reply(`
+✅ *${type.toUpperCase()}* agora está *${isEnable ? `Ativado` : `Desativado`}* ${isAll ? `para este bot` : isUser ? 'para você' : `para este grupo`}
+`.trim(), null, fwc) 
 
 }
-handler.help = ['en', 'dis'].map(v => v + 'able <option>')
+handler.help = ['on', 'off'].map(v => v + ' <opção>')
 handler.tags = ['nable']
 handler.command = /^((en|dis)able|(tru|fals)e|(turn)?o(n|ff)|[01])$/i
 
