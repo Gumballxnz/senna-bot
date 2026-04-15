@@ -1,15 +1,9 @@
 
-let handler = async (m, { conn, args, usedPrefix, command }) => {
+let handler = async (m, { conn, args, usedPrefix, command, isAdmin, isOwner }) => {
+    if (!isAdmin && !isOwner) return dfail('admin', m, conn)
 
     let user = m.mentionedJid[0] || (m.quoted ? m.quoted.sender : null)
     if (!user) throw `✳️ Mencione o membro ou responda a uma mensagem dele\n\n📌 Exemplo: *${usedPrefix + command}* @user`
-
-    let groupMetadata = await conn.groupMetadata(m.chat)
-    let participants = groupMetadata.participants
-    let botNumber = conn.user.jid.split(':')[0] + '@s.whatsapp.net'
-    let isBotAdmin = participants.find(p => p.id === botNumber)?.admin
-
-    if (!isBotAdmin) throw '❎ O bot precisa ser administrador para usar este comando!'
 
     if (command === 'promote' || command === 'promover') {
         await conn.groupParticipantsUpdate(m.chat, [user], 'promote')
@@ -22,7 +16,6 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
 handler.help = ['promote @user', 'demote @user']
 handler.tags = ['group']
 handler.command = ['promote', 'promover', 'demote', 'rebaixar']
-handler.admin = true
 handler.group = true
 handler.botAdmin = true
 
