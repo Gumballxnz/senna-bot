@@ -15,7 +15,7 @@ let handler = async (m, { conn, text }) => {
         let name = thread?.name?.text || "No disponible";
         let subscribers = thread?.subscribers_count || "0";
 
-        let created = thread?.creation_time? new Date(Number(thread.creation_time) * 1000).toLocaleString("es-ES") : "No disponible";
+        let created = thread?.creation_time? new Date(Number(thread.creation_time) * 1000).toLocaleString("pt-MZ", { timeZone: "Africa/Maputo" }) : "Não disponível";
 
         let img = thread?.preview?.direct_path? `https://pps.whatsapp.net${thread.preview.direct_path}` : null;
 

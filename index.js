@@ -117,8 +117,8 @@ async function start(file) {
   console.log(chalk.blue.bold('\n⏰ Hora Actual'))
   console.log(
     chalk.cyan(
-      new Date().toLocaleString('es-ES', {
-        timeZone: 'America/Argentina/Buenos_Aires'
+      new Date().toLocaleString('pt-MZ', {
+        timeZone: 'Africa/Maputo'
       })
     )
   )

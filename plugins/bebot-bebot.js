@@ -172,7 +172,7 @@ global.conns.push(conn)
 let logMsg = `
 ┌─⊷ 🤖 *SUB-BOT CONECTADO*
 ▢ 🤖 Bot: wa.me/${conn.user?.id?.split(":")[0]}
-▢ 🕒 Hora: ${new Date().toLocaleString("es-AR", { timeZone: "America/Argentina/Buenos_Aires" })}
+▢ 🕒 Hora: ${new Date().toLocaleString("pt-MZ", { timeZone: "Africa/Maputo" })}
 └──────────────
 `
 //await parent.sendMessage(canal_logid, { text: logMsg })
