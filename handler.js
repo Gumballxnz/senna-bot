@@ -101,7 +101,8 @@ global.db.data.statsMsg ||= {} //contador de mensaje por grupo
         antiLink: false,
         nsfw: false,
         rules: '',
-        antiBotClone: false
+        antiBotClone: false,
+        autodl: false
     }
 
     if (!global.db.data.chats[m.chat])

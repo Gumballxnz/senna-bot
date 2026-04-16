@@ -94,6 +94,14 @@ let handler = async (m, { conn, usedPrefix, command, args, isOwner, isAdmin, isR
       chat.nsfw = isEnable          
       break
 
+    case 'autodl':
+    case 'autodownload':
+      if (m.isGroup && !(isAdmin || isOwner)) return global.dfail('admin', m, conn)
+      statusMsg = checkState(chat.autodl)
+      if (statusMsg) return m.reply(statusMsg)
+      chat.autodl = isEnable
+      break
+
     case 'autolevelup':
       isUser = true
       statusMsg = checkState(user.autolevelup)
@@ -146,6 +154,7 @@ let handler = async (m, { conn, usedPrefix, command, args, isOwner, isAdmin, isR
 ▢ nsfw
 ▢ antidelete
 ▢ captcha
+▢ autodl
 └───────────── 
 ┌─⊷ *USUÁRIOS*
 ▢ autolevelup

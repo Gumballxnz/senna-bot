@@ -198,20 +198,29 @@ async function connectionUpdate(update) {
   }
 
   if (connection === 'close') {
-    const shouldReconnect =
-      lastDisconnect?.error?.output?.statusCode !==
-      DisconnectReason.loggedOut
+    const statusCode = lastDisconnect?.error?.output?.statusCode
+    const shouldReconnect = statusCode !== DisconnectReason.loggedOut
 
     if (shouldReconnect) {
-      console.log('♻ Reconectando...')
+      console.log(`♻ Reconectando... (código: ${statusCode || 'desconhecido'})`)
+      // Aguardar 3 segundos antes de reconectar para evitar flood
+      await new Promise(r => setTimeout(r, 3000))
       global.reloadHandler(true)
     } else {
-      console.log('❌ Sesión cerrada. Borra la carpeta sessions.')
+      console.log('❌ Sessão expirada! Limpando sessão antiga e reiniciando...')
+      // Limpar sessão corrompida automaticamente
+      const { rmSync } = await import('fs')
+      try { rmSync('./sessions', { recursive: true, force: true }) } catch {}
+      // Reiniciar o processo para gerar novo código de pareamento
+      console.log('🔄 Reiniciando processo em 5 segundos...')
+      setTimeout(() => process.exit(0), 5000)
     }
   }
 
   if (connection === 'open') {
     console.log('🟢 BOT CONECTADO')
+    // Salvar sessão imediatamente ao conectar
+    if (global.db.data) await global.db.write().catch(console.error)
   }
 } //-- cu 
 
