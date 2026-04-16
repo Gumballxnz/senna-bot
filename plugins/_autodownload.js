@@ -1,12 +1,13 @@
 
-import fetch from 'node-fetch'
+import fg from 'fg-senna'
+import { downloadYT } from '../lib/ytHelper.js'
+import fs from 'fs'
 
-export async function before(m, { conn, isAdmin, isOwner }) {
+export async function before(m, { conn, isOwner }) {
     if (m.isBaileys || !m.text) return false
     let chat = global.db.data.chats[m.chat]
     if (!chat || !chat.autodl) return false
 
-    // Regex para identificar os links suportados
     const tiktokRegex = /https?:\/\/(www\.|v[mt]\.|vt\.)?tiktok\.com\/[^\s]*/i
     const facebookRegex = /https?:\/\/(www\.|web\.|m\.)?(facebook\.com|fb\.watch)\/[^\s]*/i
     const instagramRegex = /https?:\/\/(www\.)?instagram\.com\/(p|reel|tv)\/[^\s]*/i
@@ -15,120 +16,98 @@ export async function before(m, { conn, isAdmin, isOwner }) {
     const youtubeRegex = /https?:\/\/(www\.|m\.)?(youtube\.com|youtu\.be)\/[^\s]*/i
 
     let text = m.text.trim()
-
-    // Flag para evitar conflitos se houver múltiplos links
     let found = false
 
-    // Verificar TikTok
+    // TikTok (fg-senna)
     if (tiktokRegex.test(text)) {
         let link = text.match(tiktokRegex)[0]
         found = true
-        await m.react('⏳')
+        m.react(rwait)
         try {
-            let res = await fetch(global.API('fgmods', '/api/downloader/tiktok', { url: link }, 'apikey'))
-            let json = await res.json()
-            if (json.status) {
-                await conn.sendFile(m.chat, json.result.video.noWatermark, 'tiktok.mp4', `✅ *TikTok detectado*`, m)
-                await m.react('✅')
-            } else {
-                console.log('AutoDL TikTok Fail:', json.msg || 'Status false')
+            let data = await fg.tiktok(link)
+            if (data.result.play) {
+                await conn.sendFile(m.chat, data.result.play, 'tiktok.mp4', `✅ *Auto DL: TikTok*`, m, null, fwc)
+                m.react(done)
             }
-        } catch (e) {
-            console.error('AutoDL TikTok Error:', e)
-        }
+        } catch (e) { console.error('AutoDL TikTok Error:', e) }
     }
 
-    // Verificar Instagram
+    // Instagram (fg-senna)
     if (!found && instagramRegex.test(text)) {
         let link = text.match(instagramRegex)[0]
         found = true
-        await m.react('⏳')
+        m.react(rwait)
         try {
-            let res = await fetch(global.API('fgmods', '/api/downloader/igdl', { url: link }, 'apikey'))
-            let json = await res.json()
-            if (json.status) {
-                for (let i of json.result) {
-                    await conn.sendFile(m.chat, i.url, 'instagram.mp4', `✅ *Instagram detectado*`, m)
-                }
-                await m.react('✅')
+            let data = await fg.igdl(link)
+            for (let i of data.result) {
+                await conn.sendFile(m.chat, i.url, 'instagram.mp4', `✅ *Auto DL: Instagram*`, m, null, fwc)
             }
-        } catch (e) {
-            console.error('AutoDL Instagram Error:', e)
-        }
+            m.react(done)
+        } catch (e) { console.error('AutoDL Instagram Error:', e) }
     }
 
-    // Verificar Facebook
+    // Facebook (fg-senna)
     if (!found && facebookRegex.test(text)) {
         let link = text.match(facebookRegex)[0]
         found = true
-        await m.react('⏳')
+        m.react(rwait)
         try {
-            let res = await fetch(global.API('fgmods', '/api/downloader/fbdl', { url: link }, 'apikey'))
-            let json = await res.json()
-            if (json.status) {
-                let vid = json.result.hd || json.result.sd
-                await conn.sendFile(m.chat, vid, 'facebook.mp4', `✅ *Facebook detectado*`, m)
-                await m.react('✅')
+            let data = await fg.fbdl(link)
+            let vid = data.result.hd || data.result.sd
+            if (vid) {
+                await conn.sendFile(m.chat, vid, 'facebook.mp4', `✅ *Auto DL: Facebook*`, m, null, fwc)
+                m.react(done)
             }
-        } catch (e) {
-            console.error('AutoDL Facebook Error:', e)
-        }
+        } catch (e) { console.error('AutoDL Facebook Error:', e) }
     }
 
-    // Verificar Mediafire
+    // Mediafire (fg-senna)
     if (!found && mediafireRegex.test(text)) {
         let link = text.match(mediafireRegex)[0]
         found = true
-        await m.react('⏳')
+        m.react(rwait)
         try {
-            let res = await fetch(global.API('fgmods', '/api/downloader/mediafire', { url: link }, 'apikey'))
-            let json = await res.json()
-            if (json.status) {
-                let { url: downloadUrl, filename, ext, filesizeH } = json.result
-                if (parseInt(filesizeH) > 200 && filesizeH.includes('MB') && !isOwner) return m.reply('✳️ Arquivo muito grande para autodownload (Máx 200MB).')
-                await conn.sendFile(m.chat, downloadUrl, filename, `✅ *Mediafire detectado*\n▢ *Nome:* ${filename}`, m, null, { asDocument: true })
-                await m.react('✅')
+            let data = await fg.mediafire(link)
+            if (data.url) {
+                let size = parseInt(data.size)
+                if (size > 200 && data.size.includes('MB') && !isOwner) return m.reply('✳️ Arquivo muito grande para AutoDL.')
+                await conn.sendFile(m.chat, data.url, data.filename, `✅ *Auto DL: Mediafire*`, m, null, { asDocument: true })
+                m.react(done)
             }
-        } catch (e) {
-            console.error('AutoDL Mediafire Error:', e)
-        }
+        } catch (e) { console.error('AutoDL Mediafire Error:', e) }
     }
 
-    // Verificar MEGA
+    // MEGA (fg-senna)
     if (!found && megaRegex.test(text)) {
         let link = text.match(megaRegex)[0]
         found = true
-        await m.react('⏳')
+        m.react(rwait)
         try {
-            let res = await fetch(global.API('fgmods', '/api/downloader/mega', { url: link }, 'apikey'))
-            let json = await res.json()
-            if (json.status) {
-                let { download: downloadUrl, filename } = json.result
-                await conn.sendFile(m.chat, downloadUrl, filename, `✅ *MEGA detectado*`, m, null, { asDocument: true })
-                await m.react('✅')
+            let data = await fg.mega(link)
+            if (data.download) {
+                await conn.sendFile(m.chat, data.download, data.filename, `✅ *Auto DL: MEGA*`, m, null, { asDocument: true })
+                m.react(done)
             }
-        } catch (e) {
-            console.error('AutoDL MEGA Error:', e)
-        }
+        } catch (e) { console.error('AutoDL MEGA Error:', e) }
     }
 
-    // Verificar YouTube (Vídeo)
+    // YouTube (ytHelper + yt-dlp)
     if (!found && youtubeRegex.test(text)) {
         let link = text.match(youtubeRegex)[0]
         found = true
-        await m.react('⏳')
+        m.react(rwait)
         try {
-            let res = await fetch(global.API('fgmods', '/api/downloader/ytmp4', { url: link }, 'apikey'))
-            let json = await res.json()
-            if (json.status) {
-                let { dl_url, title, size } = json.result
-                if (parseInt(size) > 100 && !isOwner) return m.reply('✳️ Vídeo muito grande para autodownload.')
-                await conn.sendFile(m.chat, dl_url, title + '.mp4', `✅ *YouTube detectado*`, m)
-                await m.react('✅')
+            let { filePath, size } = await downloadYT(link, 'video')
+            if (fs.existsSync(filePath)) {
+                if (size > 100 * 1024 * 1024 && !isOwner) {
+                    fs.unlinkSync(filePath)
+                    return m.reply('✳️ Vídeo muito grande para AutoDL.')
+                }
+                await conn.sendFile(m.chat, filePath, 'video.mp4', `✅ *Auto DL: YouTube*`, m)
+                fs.unlinkSync(filePath)
+                m.react(done)
             }
-        } catch (e) {
-            console.error('AutoDL YT Error:', e)
-        }
+        } catch (e) { console.error('AutoDL YouTube Error:', e) }
     }
 
     return found
