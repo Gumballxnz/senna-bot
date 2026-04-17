@@ -29,7 +29,11 @@ export async function before(m, { conn, isOwner }) {
                 await conn.sendFile(m.chat, data.result.play, 'tiktok.mp4', `✅ *Auto DL: TikTok*`, m, null, fwc)
                 m.react(done)
             }
-        } catch (e) { console.error('AutoDL TikTok Error:', e) }
+        } catch (e) {
+            console.error('AutoDL TikTok Error:', e)
+            m.react('❌')
+            m.reply(`❎ Erro ao baixar TikTok: ${e.message}`)
+        }
     }
 
     // Instagram (fg-senna)
@@ -43,7 +47,11 @@ export async function before(m, { conn, isOwner }) {
                 await conn.sendFile(m.chat, i.url, 'instagram.mp4', `✅ *Auto DL: Instagram*`, m, null, fwc)
             }
             m.react(done)
-        } catch (e) { console.error('AutoDL Instagram Error:', e) }
+        } catch (e) {
+            console.error('AutoDL Instagram Error:', e)
+            m.react('❌')
+            m.reply(`❎ Erro ao baixar Instagram: ${e.message}`)
+        }
     }
 
     // Facebook (fg-senna)
@@ -58,7 +66,11 @@ export async function before(m, { conn, isOwner }) {
                 await conn.sendFile(m.chat, vid, 'facebook.mp4', `✅ *Auto DL: Facebook*`, m, null, fwc)
                 m.react(done)
             }
-        } catch (e) { console.error('AutoDL Facebook Error:', e) }
+        } catch (e) {
+            console.error('AutoDL Facebook Error:', e)
+            m.react('❌')
+            m.reply(`❎ Erro ao baixar Facebook: ${e.message}`)
+        }
     }
 
     // Mediafire (fg-senna)
@@ -74,7 +86,11 @@ export async function before(m, { conn, isOwner }) {
                 await conn.sendFile(m.chat, data.url, data.filename, `✅ *Auto DL: Mediafire*`, m, null, { asDocument: true })
                 m.react(done)
             }
-        } catch (e) { console.error('AutoDL Mediafire Error:', e) }
+        } catch (e) {
+            console.error('AutoDL Mediafire Error:', e)
+            m.react('❌')
+            m.reply(`❎ Erro ao baixar Mediafire: ${e.message}`)
+        }
     }
 
     // MEGA (fg-senna)
@@ -88,7 +104,11 @@ export async function before(m, { conn, isOwner }) {
                 await conn.sendFile(m.chat, data.download, data.filename, `✅ *Auto DL: MEGA*`, m, null, { asDocument: true })
                 m.react(done)
             }
-        } catch (e) { console.error('AutoDL MEGA Error:', e) }
+        } catch (e) {
+            console.error('AutoDL MEGA Error:', e)
+            m.react('❌')
+            m.reply(`❎ Erro ao baixar MEGA: ${e.message}`)
+        }
     }
 
     // YouTube (ytHelper + yt-dlp)
@@ -101,13 +121,17 @@ export async function before(m, { conn, isOwner }) {
             if (fs.existsSync(filePath)) {
                 if (size > 100 * 1024 * 1024 && !isOwner) {
                     fs.unlinkSync(filePath)
-                    return m.reply('✳️ Vídeo muito grande para AutoDL.')
+                    return m.reply('✳️ Vídeo muito grande para AutoDL (Max 100MB).')
                 }
                 await conn.sendFile(m.chat, filePath, 'video.mp4', `✅ *Auto DL: YouTube*`, m)
                 fs.unlinkSync(filePath)
                 m.react(done)
             }
-        } catch (e) { console.error('AutoDL YouTube Error:', e) }
+        } catch (e) {
+            console.error('AutoDL YouTube Error:', e)
+            m.react('❌')
+            m.reply(`❎ Erro ao baixar YouTube: ${e.message}`)
+        }
     }
 
     return found
