@@ -11,10 +11,14 @@ let handler = async (m, { conn, args, text, usedPrefix, command }) => {
     let who = m.quoted ? m.quoted.sender : m.mentionedJid && m.mentionedJid[0] ? m.mentionedJid[0] : m.fromMe ? conn.user.jid : m.sender;
     let chat = global.db.data.chats[m.chat];
 
+    m.react(rwait)
     let res = await yts(text)
     let vid = res.videos[0]
 
-    if (!vid) throw `❎ Video não encontrado`
+    if (!vid) {
+        m.react('❌')
+        throw `❎ Video não encontrado`
+    }
 
     let { title, thumbnail, url, timestamp, views, ago } = vid
 
@@ -61,7 +65,7 @@ handler.before = async m => {
     if (m.text.trim() === '1') {
         clearTimeout(timeout);
         delete confirmation[m.sender];
-
+        m.react(rwait)
         try {
             let { filePath, title } = await downloadYT(url, 'audio')
             if (fs.existsSync(filePath)) {
@@ -71,13 +75,14 @@ handler.before = async m => {
             }
         } catch (e) {
             console.error('[play-audio] Erro:', e)
+            m.react('❌')
             m.reply(`❎ Erro ao baixar áudio: ${e.message}`)
         }
 
     } else if (m.text.trim() === '2') {
         clearTimeout(timeout);
         delete confirmation[m.sender];
-
+        m.react(rwait)
         try {
             let { filePath, title, size } = await downloadYT(url, 'video')
             if (fs.existsSync(filePath)) {
