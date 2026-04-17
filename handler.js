@@ -64,7 +64,7 @@ global.db.data.statsMsg ||= {} //contador de mensaje por grupo
     const userDefaults = {
         exp: 0,
         coin: 0,
-        diamond: 20,
+        diamond: 500,
         bank: 0,
         registered: false,
         name: m.name,
@@ -184,7 +184,7 @@ if (opts.swonly && m.chat !== 'status@broadcast') return
 if (!global.db.data.users[m.sender]) {
     global.db.data.users[m.sender] = {
         exp: 0,
-        diamond: 20,
+        diamond: 500,
         level: 0,
         prem: false
     }
@@ -412,11 +412,13 @@ const isBotAdmin = !!bot?.admin
                 }
                 try {
                     await plugin.call(this, m, extra)
-                    if (!isPrems)
+                    // Só cobra diamantes se o comando foi executado SEM erros
+                    if (!isPrems && !m.error)
                         m.diamond = m.diamond || plugin.diamond || false
                 } catch (e) {
-                    // Error occured
+                    // Error occured - NÃO cobra diamantes
                     m.error = e
+                    m.diamond = false
                     console.error(e)
                     if (e) {
                         let text = format(e)

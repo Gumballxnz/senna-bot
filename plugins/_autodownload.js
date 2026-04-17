@@ -2,6 +2,7 @@
 import fg from 'fg-senna'
 import { downloadYT } from '../lib/ytHelper.js'
 import fs from 'fs'
+import fetch from 'node-fetch'
 
 export async function before(m, { conn, isOwner }) {
     if (m.isBaileys || !m.text) return false
@@ -54,18 +55,23 @@ export async function before(m, { conn, isOwner }) {
         }
     }
 
-    // Facebook (fg-senna)
+    // Facebook (API pura, sem Puppeteer/Chrome)
     if (!found && facebookRegex.test(text)) {
         let link = text.match(facebookRegex)[0]
         found = true
         m.react(rwait)
         try {
-            let data = await fg.fbdl(link)
-            let vid = data.result.hd || data.result.sd
-            if (vid) {
-                await conn.sendFile(m.chat, vid, 'facebook.mp4', `✅ *Auto DL: Facebook*`, m, null, fwc)
-                m.react(done)
+            let url = null
+            let results = await Promise.allSettled([
+                fg.fbdl(link).then(r => r?.HD || r?.SD || r?.videoUrl || null).catch(() => null),
+                fetch(`https://api.siputzx.my.id/api/d/facebook?url=${encodeURIComponent(link)}`).then(v => v.json()).then(j => j?.data?.url || j?.data?.hd || j?.data?.sd || null).catch(() => null)
+            ])
+            for (let r of results) {
+                if (r.status === 'fulfilled' && r.value) { url = r.value; break }
             }
+            if (!url) throw new Error('Não foi possível obter o vídeo do Facebook.')
+            await conn.sendFile(m.chat, url, 'facebook.mp4', `✅ *Auto DL: Facebook*`, m, null, fwc)
+            m.react(done)
         } catch (e) {
             console.error('AutoDL Facebook Error:', e)
             m.react('❌')
@@ -82,7 +88,7 @@ export async function before(m, { conn, isOwner }) {
             let data = await fg.mediafire(link)
             if (data.url) {
                 let size = parseInt(data.size)
-                if (size > 200 && data.size.includes('MB') && !isOwner) return m.reply('✳️ Arquivo muito grande para AutoDL.')
+                if (size > 1024 && data.size.includes('MB') && !isOwner) return m.reply('✳️ Arquivo muito grande para AutoDL (Max 1GB). Use o comando .mediafire para limites de até 3GB.')
                 await conn.sendFile(m.chat, data.url, data.filename, `✅ *Auto DL: Mediafire*`, m, null, { asDocument: true })
                 m.react(done)
             }
@@ -119,9 +125,9 @@ export async function before(m, { conn, isOwner }) {
         try {
             let { filePath, size } = await downloadYT(link, 'video')
             if (fs.existsSync(filePath)) {
-                if (size > 100 * 1024 * 1024 && !isOwner) {
+                if (size > 1024 * 1024 * 1024 && !isOwner) {
                     fs.unlinkSync(filePath)
-                    return m.reply('✳️ Vídeo muito grande para AutoDL (Max 100MB).')
+                    return m.reply('✳️ Vídeo muito grande para AutoDL (Max 1GB). Use o comando manual para links maiores.')
                 }
                 await conn.sendFile(m.chat, filePath, 'video.mp4', `✅ *Auto DL: YouTube*`, m)
                 fs.unlinkSync(filePath)
