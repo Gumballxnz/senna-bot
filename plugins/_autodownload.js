@@ -3,12 +3,21 @@ import fg from 'fg-senna'
 import { downloadYT } from '../lib/ytHelper.js'
 import fs from 'fs'
 import path from 'path'
-import { execSync } from 'child_process'
+import { exec } from 'child_process'
+import { promisify } from 'util'
+
+const execAsync = promisify(exec)
 
 export async function before(m, { conn, isOwner }) {
     if (m.isBaileys || m.fromMe || !m.text) return false
     let chat = global.db.data.chats[m.chat]
     if (!chat || !chat.autodl) return false
+
+    let text = m.text.trim()
+
+    // Se a mensagem começa com um prefixo de comando, ignorar AutoDL
+    // Isso evita o download duplo quando alguém usa .tiktok, .fb, etc.
+    if (global.prefix.test(text)) return false
 
     const tiktokRegex = /https?:\/\/(www\.|v[mt]\.|vt\.)?tiktok\.com\/[^\s]*/i
     const facebookRegex = /https?:\/\/(www\.|web\.|m\.)?(facebook\.com|fb\.watch)\/[^\s]*/i
@@ -17,7 +26,6 @@ export async function before(m, { conn, isOwner }) {
     const megaRegex = /https?:\/\/mega\.nz\/file\/[^\s]*/i
     const youtubeRegex = /https?:\/\/(www\.|m\.)?(youtube\.com|youtu\.be)\/[^\s]*/i
 
-    let text = m.text.trim()
     let found = false
 
     // TikTok (fg-senna)
@@ -56,7 +64,7 @@ export async function before(m, { conn, isOwner }) {
         }
     }
 
-    // Facebook (yt-dlp direto, sem Chrome/Puppeteer)
+    // Facebook (yt-dlp assíncrono, sem Chrome/Puppeteer)
     if (!found && facebookRegex.test(text)) {
         let link = text.match(facebookRegex)[0]
         found = true
@@ -65,7 +73,7 @@ export async function before(m, { conn, isOwner }) {
             const TEMP_DIR = path.join(process.cwd(), 'tmp')
             if (!fs.existsSync(TEMP_DIR)) fs.mkdirSync(TEMP_DIR, { recursive: true })
             const filePath = path.join(TEMP_DIR, `fb_${Date.now()}.mp4`)
-            execSync(`yt-dlp -f "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best" --merge-output-format mp4 -o "${filePath}" "${link}"`, { timeout: 120000 })
+            await execAsync(`yt-dlp -f "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best" --merge-output-format mp4 -o "${filePath}" "${link}"`, { timeout: 120000 })
             if (!fs.existsSync(filePath)) throw new Error('Arquivo não baixado.')
             await conn.sendFile(m.chat, filePath, 'facebook.mp4', `✅ *Auto DL: Facebook*`, m, null, fwc)
             fs.unlinkSync(filePath)

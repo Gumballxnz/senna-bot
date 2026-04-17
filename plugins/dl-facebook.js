@@ -1,6 +1,9 @@
 import fs from 'fs'
 import path from 'path'
-import { execSync } from 'child_process'
+import { exec } from 'child_process'
+import { promisify } from 'util'
+
+const execAsync = promisify(exec)
 
 let handler = async (m, { conn, text, args, usedPrefix, command }) => {
   if (!args[0]) throw `✳️ Insira un Link de Facebook\n\n📌 Exemplo :\n*${usedPrefix + command}* https://fb.watch/d7nB8-L-gR/`
@@ -11,8 +14,8 @@ let handler = async (m, { conn, text, args, usedPrefix, command }) => {
     if (!fs.existsSync(TEMP_DIR)) fs.mkdirSync(TEMP_DIR, { recursive: true })
     const filePath = path.join(TEMP_DIR, `fb_${Date.now()}.mp4`)
 
-    // Usa yt-dlp direto (não precisa de Chrome/Puppeteer)
-    execSync(`yt-dlp -f "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best" --merge-output-format mp4 -o "${filePath}" "${args[0]}"`, {
+    // Usa yt-dlp assíncrono (não trava o bot durante o download)
+    await execAsync(`yt-dlp -f "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best" --merge-output-format mp4 -o "${filePath}" "${args[0]}"`, {
       timeout: 120000 // 2 minutos de timeout
     })
 
