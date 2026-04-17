@@ -26,7 +26,7 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
             `≡  *FG YTDL (yt-dlp)*\n\n▢ *📌Titulo* : ${title}`.trim(),
             m,
             false,
-            { mimetype: 'audio/mpeg', asDocument: chat?.useDocument }
+            { mimetype: 'audio/mp4', asDocument: chat?.useDocument }
         )
 
         // Limpar arquivo temporário após o envio

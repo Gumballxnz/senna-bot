@@ -65,7 +65,7 @@ handler.before = async m => {
         try {
             let { filePath, title } = await downloadYT(url, 'audio')
             if (fs.existsSync(filePath)) {
-                await conn.sendFile(m.chat, filePath, title + '.mp3', `≡ *FG YTDL*\n\n▢ *📌Titulo* : ${title}`.trim(), m, false, { mimetype: 'audio/mpeg', asDocument: true })
+                await conn.sendFile(m.chat, filePath, title + '.mp3', `≡ *FG YTDL*\n\n▢ *📌Titulo* : ${title}`.trim(), m, false, { mimetype: 'audio/mp4', asDocument: chat?.useDocument })
                 fs.unlinkSync(filePath)
                 m.react(done)
             }
