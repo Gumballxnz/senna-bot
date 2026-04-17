@@ -23,7 +23,7 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
             m.chat,
             filePath,
             title + '.mp3',
-            `≡  *FG YTDL (yt-dlp)*\n\n▢ *📌Titulo* : ${title}`.trim(),
+            '',
             m,
             false,
             { mimetype: 'audio/mpeg', asDocument: chat?.useDocument }
