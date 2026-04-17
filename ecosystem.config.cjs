@@ -3,10 +3,11 @@ module.exports = {
     name: 'senna-bot',
     script: 'index.js',
     cwd: '/home/ubuntu/senna-bot',
-    node_args: '--max-old-space-size=200',
-    max_memory_restart: '250M',
+    node_args: '--max-old-space-size=350 --expose-gc',
+    max_memory_restart: '350M',
     autorestart: true,
     watch: false,
+    kill_timeout: 3000,
     env: {
       NODE_ENV: 'production',
       TZ: 'Africa/Maputo'
