@@ -2,10 +2,11 @@
 import fg from 'fg-senna'
 import { downloadYT } from '../lib/ytHelper.js'
 import fs from 'fs'
-import fetch from 'node-fetch'
+import path from 'path'
+import { execSync } from 'child_process'
 
 export async function before(m, { conn, isOwner }) {
-    if (m.isBaileys || !m.text) return false
+    if (m.isBaileys || m.fromMe || !m.text) return false
     let chat = global.db.data.chats[m.chat]
     if (!chat || !chat.autodl) return false
 
@@ -55,27 +56,24 @@ export async function before(m, { conn, isOwner }) {
         }
     }
 
-    // Facebook (API pura, sem Puppeteer/Chrome)
+    // Facebook (yt-dlp direto, sem Chrome/Puppeteer)
     if (!found && facebookRegex.test(text)) {
         let link = text.match(facebookRegex)[0]
         found = true
         m.react(rwait)
         try {
-            let url = null
-            let results = await Promise.allSettled([
-                fg.fbdl(link).then(r => r?.HD || r?.SD || r?.videoUrl || null).catch(() => null),
-                fetch(`https://api.siputzx.my.id/api/d/facebook?url=${encodeURIComponent(link)}`).then(v => v.json()).then(j => j?.data?.url || j?.data?.hd || j?.data?.sd || null).catch(() => null)
-            ])
-            for (let r of results) {
-                if (r.status === 'fulfilled' && r.value) { url = r.value; break }
-            }
-            if (!url) throw new Error('Não foi possível obter o vídeo do Facebook.')
-            await conn.sendFile(m.chat, url, 'facebook.mp4', `✅ *Auto DL: Facebook*`, m, null, fwc)
+            const TEMP_DIR = path.join(process.cwd(), 'tmp')
+            if (!fs.existsSync(TEMP_DIR)) fs.mkdirSync(TEMP_DIR, { recursive: true })
+            const filePath = path.join(TEMP_DIR, `fb_${Date.now()}.mp4`)
+            execSync(`yt-dlp -f "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best" --merge-output-format mp4 -o "${filePath}" "${link}"`, { timeout: 120000 })
+            if (!fs.existsSync(filePath)) throw new Error('Arquivo não baixado.')
+            await conn.sendFile(m.chat, filePath, 'facebook.mp4', `✅ *Auto DL: Facebook*`, m, null, fwc)
+            fs.unlinkSync(filePath)
             m.react(done)
         } catch (e) {
             console.error('AutoDL Facebook Error:', e)
             m.react('❌')
-            m.reply(`❎ Erro ao baixar Facebook: ${e.message}`)
+            m.reply(`❎ Erro ao baixar Facebook: Verifique se o link é público.`)
         }
     }
 
