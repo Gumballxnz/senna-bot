@@ -25,8 +25,8 @@ let handler = async (m, { conn, args, text, usedPrefix, command }) => {
     // --- CÁLCULO DE PESO INSTANTÂNEO ---
     // Áudio 128kbps = Exatos 16KB/s (0.016MB por segundo).
     let audioSize = (seconds * 0.016).toFixed(1)
-    // Vídeo 720p/1080p costuma pesar cerca de 8 a 15 MB por minuto, média de ~0.2 MB/s.
-    let videoSize = (seconds * 0.20).toFixed(1)
+    // Vídeo 720p/1080p média real de ~0.12 MB/s.
+    let videoSize = (seconds * 0.12).toFixed(1)
 
     m.react('🎧')
 
@@ -49,6 +49,7 @@ Responda com 1 ou 2:
         sender: m.sender,
         to: who,
         url: url, 
+        title: title, // Salva o nome real
         chat: chat, 
         timeout: setTimeout(() => {
             delete confirmation[m.sender];
@@ -73,10 +74,11 @@ handler.before = async m => {
         delete confirmation[m.sender];
         m.react(rwait)
         try {
-            let { filePath, title } = await downloadYT(url, 'audio')
-            if (fs.existsSync(filePath)) {
-                await conn.sendFile(m.chat, filePath, title + '.mp3', '', m, false, { mimetype: 'audio/mpeg', asDocument: chat?.useDocument })
-                fs.unlinkSync(filePath)
+            let resDL = await downloadYT(url, 'audio')
+            let fileName = (resDL.title === 'audio_video' || resDL.title.includes('yt_')) ? (confirmation[m.sender]?.title || resDL.title) : resDL.title
+            if (fs.existsSync(resDL.filePath)) {
+                await conn.sendFile(m.chat, resDL.filePath, fileName + '.mp3', '', m, false, { mimetype: 'audio/mpeg', asDocument: chat?.useDocument })
+                fs.unlinkSync(resDL.filePath)
                 m.react(done)
             }
         } catch (e) {
@@ -90,20 +92,21 @@ handler.before = async m => {
         delete confirmation[m.sender];
         m.react(rwait)
         try {
-            let { filePath, title, size } = await downloadYT(url, 'video')
-            if (fs.existsSync(filePath)) {
+            let resDL = await downloadYT(url, 'video')
+            let fileName = (resDL.title === 'audio_video' || resDL.title.includes('yt_')) ? (confirmation[m.sender]?.title || resDL.title || 'video') : resDL.title
+            if (fs.existsSync(resDL.filePath)) {
                 let user = global.db.data.users[m.sender] || {}
                 let isPrems = user.premium
                 let isOwner = global.owner.some(([num]) => num === m.sender.split('@')[0])
                 let limit = isOwner || isPrems ? 2000 : 1000
                 
-                let isLimit = limit * 1024 * 1024 < size
+                let isLimit = limit * 1024 * 1024 < resDL.size
                 if (isLimit) {
-                    fs.unlinkSync(filePath)
-                    return m.reply(`❎ Tamanho excedido: ${(size / (1024 * 1024)).toFixed(2)} MB`)
+                    fs.unlinkSync(resDL.filePath)
+                    return m.reply(`❎ Tamanho excedido: ${(resDL.size / (1024 * 1024)).toFixed(2)} MB`)
                 }
-                await conn.sendFile(m.chat, filePath, title + '.mp4', `≡ *FG YTDL*\n\n▢ *📌Titulo* : ${title}`.trim(), m, false, { asDocument: true })
-                fs.unlinkSync(filePath)
+                await conn.sendFile(m.chat, resDL.filePath, fileName + '.mp4', `≡ *FG YTDL*\n\n▢ *📌Titulo* : ${fileName}`.trim(), m, false, { asDocument: true })
+                fs.unlinkSync(resDL.filePath)
                 m.react(done)
             }
         } catch (e) {
