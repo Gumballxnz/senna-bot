@@ -53,8 +53,12 @@ export async function before(m, { conn, isOwner }) {
         m.react(rwait)
         try {
             let data = await fg.igdl(link)
-            for (let i of data.result) {
-                await conn.sendFile(m.chat, i.url, 'instagram.mp4', `✅ *Auto DL: Instagram*`, m, null, fwc)
+            if (data.dl_url) {
+                await conn.sendFile(m.chat, data.dl_url, 'instagram.mp4', `✅ *Auto DL: Instagram*`, m, null, fwc)
+            } else if (data.result && data.result.length > 0) {
+                for (let i of data.result) {
+                    await conn.sendFile(m.chat, i.url, 'instagram.mp4', `✅ *Auto DL: Instagram*`, m, null, fwc)
+                }
             }
             m.react(done)
         } catch (e) {
@@ -76,8 +80,8 @@ export async function before(m, { conn, isOwner }) {
             const finalPath = path.join(TEMP_DIR, `fb_${Date.now()}.mp4`)
             await execAsync(`yt-dlp -f "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best" --merge-output-format mp4 -o "${rawPath}" "${link}"`, { timeout: 120000 })
             if (!fs.existsSync(rawPath)) throw new Error('Arquivo não baixado.')
-            // Transcodifica para MP4 limpo (H.264 + AAC) compatível com WhatsApp
-            await execAsync(`ffmpeg -i "${rawPath}" -c:v libx264 -preset ultrafast -crf 23 -c:a aac -b:a 128k -movflags +faststart -y "${finalPath}"`, { timeout: 180000 })
+            // Transcodifica apeas o áudio e copia o vídeo intacto + faststart (leva apenas ~2 segundos)
+            await execAsync(`ffmpeg -i "${rawPath}" -c:v copy -c:a aac -b:a 128k -movflags +faststart -y "${finalPath}"`, { timeout: 180000 })
             if (fs.existsSync(rawPath)) fs.unlinkSync(rawPath)
             if (!fs.existsSync(finalPath)) throw new Error('Erro na transcodificação.')
             await conn.sendFile(m.chat, finalPath, 'facebook.mp4', `✅ *Auto DL: Facebook*`, m, null, fwc)

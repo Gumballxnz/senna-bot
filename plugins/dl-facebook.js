@@ -22,8 +22,8 @@ let handler = async (m, { conn, text, args, usedPrefix, command }) => {
 
     if (!fs.existsSync(rawPath)) throw new Error('Arquivo não foi baixado.')
 
-    // Transcodifica com FFmpeg para MP4 limpo (H.264 + AAC) compatível com WhatsApp
-    await execAsync(`ffmpeg -i "${rawPath}" -c:v libx264 -preset ultrafast -crf 23 -c:a aac -b:a 128k -movflags +faststart -y "${finalPath}"`, {
+    // Copia o stream de vídeo (instantâneo) e transcodifica o áudio + movflags (compatível com WhatsApp)
+    await execAsync(`ffmpeg -i "${rawPath}" -c:v copy -c:a aac -b:a 128k -movflags +faststart -y "${finalPath}"`, {
       timeout: 180000
     })
 
