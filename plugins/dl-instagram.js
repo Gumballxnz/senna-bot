@@ -26,13 +26,27 @@ let handler = async (m, { conn, text, args, usedPrefix, command }) => {
         const rawPath = path.join(TEMP_DIR, `ig_raw_${Date.now()}.mp4`)
         const finalPath = path.join(TEMP_DIR, `ig_${Date.now()}.mp4`)
 
-        await execAsync(`yt-dlp -f "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best" --merge-output-format mp4 -o "${rawPath}" "${args[0]}"`, { timeout: 120000 })
-        if (!fs.existsSync(rawPath)) throw new Error("Erro yt-dlp")
-        await execAsync(`ffmpeg -i "${rawPath}" -c:v copy -c:a aac -b:a 128k -movflags +faststart -y "${finalPath}"`, { timeout: 180000 })
-        if (fs.existsSync(rawPath)) fs.unlinkSync(rawPath)
+        let success = false
+        try {
+            await execAsync(`yt-dlp -f "best[ext=mp4]/best" --merge-output-format mp4 -o "${rawPath}" "${args[0]}"`, { timeout: 120000 })
+            if (fs.existsSync(rawPath)) {
+                await execAsync(`ffmpeg -i "${rawPath}" -c:v copy -c:a aac -b:a 128k -movflags +faststart -y "${finalPath}"`, { timeout: 180000 })
+                if (fs.existsSync(rawPath)) fs.unlinkSync(rawPath)
+                if (fs.existsSync(finalPath)) {
+                    await conn.sendFile(m.chat, finalPath, 'ig.mp4', `✅ *Instagram (HD)*`, m, null, fwc)
+                    fs.unlinkSync(finalPath)
+                    success = true
+                }
+            }
+        } catch (ee) {
+            console.error('yt-dlp Instagram manual failed, falling back to API URL')
+        }
 
-        await conn.sendFile(m.chat, finalPath, 'ig.mp4', `✅ *Instagram (HD)*`, m, null, fwc)
-        if (fs.existsSync(finalPath)) fs.unlinkSync(finalPath)
+        if (!success) {
+            let url = data.dl_url || (data.result && data.result[0]?.url)
+            if (url) await conn.sendFile(m.chat, url, 'ig.mp4', `✅ Resultado`, m, null, fwc)
+            else throw new Error('Não foi possível obter a URL de download.')
+        }
         m.react(done)
     }
   } catch (error) {

@@ -33,13 +33,25 @@ let handler = async (m, { conn, text, args, usedPrefix, command }) => {
             const rawPath = path.join(TEMP_DIR, `tt_raw_${Date.now()}.mp4`)
             const finalPath = path.join(TEMP_DIR, `tt_${Date.now()}.mp4`)
 
-            await execAsync(`yt-dlp -f "best[ext=mp4]/best" --merge-output-format mp4 -o "${rawPath}" "${args[0]}"`, { timeout: 120000 })
-            if (!fs.existsSync(rawPath)) throw new Error("Erro yt-dlp")
-            await execAsync(`ffmpeg -i "${rawPath}" -c:v copy -c:a aac -b:a 128k -movflags +faststart -y "${finalPath}"`, { timeout: 180000 })
-            if (fs.existsSync(rawPath)) fs.unlinkSync(rawPath)
+            let success = false
+            try {
+                await execAsync(`yt-dlp -f "best[ext=mp4]/best" --merge-output-format mp4 -o "${rawPath}" "${args[0]}"`, { timeout: 120000 })
+                if (fs.existsSync(rawPath)) {
+                    await execAsync(`ffmpeg -i "${rawPath}" -c:v copy -c:a aac -b:a 128k -movflags +faststart -y "${finalPath}"`, { timeout: 180000 })
+                    if (fs.existsSync(rawPath)) fs.unlinkSync(rawPath)
+                    if (fs.existsSync(finalPath)) {
+                        await conn.sendFile(m.chat, finalPath, 'tiktok.mp4', tex, m, null, fwc);
+                        fs.unlinkSync(finalPath)
+                        success = true
+                    }
+                }
+            } catch (ee) {
+                console.error('yt-dlp TikTok manual failed, falling back to API URL')
+            }
 
-            await conn.sendFile(m.chat, finalPath, 'tiktok.mp4', tex, m, null, fwc);
-            if (fs.existsSync(finalPath)) fs.unlinkSync(finalPath)
+            if (!success && data.result.play) {
+                await conn.sendFile(m.chat, data.result.play, 'tiktok.mp4', tex, m, null, fwc);
+            }
             m.react(done)
         } else {
             let cap = `

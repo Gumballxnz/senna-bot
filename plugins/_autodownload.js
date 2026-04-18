@@ -48,14 +48,25 @@ export async function before(m, { conn, isOwner }) {
                 const rawPath = path.join(TEMP_DIR, `tk_raw_${Date.now()}.mp4`)
                 const finalPath = path.join(TEMP_DIR, `tk_${Date.now()}.mp4`)
                 
-                await execAsync(`yt-dlp -f "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best" --merge-output-format mp4 -o "${rawPath}" "${link}"`, { timeout: 120000 })
-                if (!fs.existsSync(rawPath)) throw new Error('Arquivo não baixado.')
-                await execAsync(`ffmpeg -i "${rawPath}" -c:v copy -c:a aac -b:a 128k -movflags +faststart -y "${finalPath}"`, { timeout: 180000 })
-                if (fs.existsSync(rawPath)) fs.unlinkSync(rawPath)
-                if (!fs.existsSync(finalPath)) throw new Error('Erro na conversão.')
+                let success = false
+                try {
+                    await execAsync(`yt-dlp -f "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best" --merge-output-format mp4 -o "${rawPath}" "${link}"`, { timeout: 120000 })
+                    if (fs.existsSync(rawPath)) {
+                        await execAsync(`ffmpeg -i "${rawPath}" -c:v copy -c:a aac -b:a 128k -movflags +faststart -y "${finalPath}"`, { timeout: 180000 })
+                        if (fs.existsSync(rawPath)) fs.unlinkSync(rawPath)
+                        if (fs.existsSync(finalPath)) {
+                            await conn.sendFile(m.chat, finalPath, 'tiktok.mp4', `✅ *Auto DL: TikTok (HD)*`, m, null, fwc)
+                            fs.unlinkSync(finalPath)
+                            success = true
+                        }
+                    }
+                } catch (ee) {
+                    console.error('yt-dlp TikTok failed, falling back to API URL')
+                }
 
-                await conn.sendFile(m.chat, finalPath, 'tiktok.mp4', `✅ *Auto DL: TikTok (HD)*`, m, null, fwc)
-                fs.unlinkSync(finalPath)
+                if (!success && data.result.play) {
+                    await conn.sendFile(m.chat, data.result.play, 'tiktok.mp4', `✅ *Auto DL: TikTok*`, m, null, fwc)
+                }
                 m.react(done)
             }
         } catch (e) {
@@ -85,14 +96,27 @@ export async function before(m, { conn, isOwner }) {
                 const rawPath = path.join(TEMP_DIR, `ig_raw_${Date.now()}.mp4`)
                 const finalPath = path.join(TEMP_DIR, `ig_${Date.now()}.mp4`)
                 
-                await execAsync(`yt-dlp -f "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best" --merge-output-format mp4 -o "${rawPath}" "${link}"`, { timeout: 120000 })
-                if (!fs.existsSync(rawPath)) throw new Error('Arquivo não baixado.')
-                await execAsync(`ffmpeg -i "${rawPath}" -c:v copy -c:a aac -b:a 128k -movflags +faststart -y "${finalPath}"`, { timeout: 180000 })
-                if (fs.existsSync(rawPath)) fs.unlinkSync(rawPath)
-                if (!fs.existsSync(finalPath)) throw new Error('Erro na conversão.')
+                let success = false
+                try {
+                    await execAsync(`yt-dlp -f "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best" --merge-output-format mp4 -o "${rawPath}" "${link}"`, { timeout: 120000 })
+                    if (fs.existsSync(rawPath)) {
+                        await execAsync(`ffmpeg -i "${rawPath}" -c:v copy -c:a aac -b:a 128k -movflags +faststart -y "${finalPath}"`, { timeout: 180000 })
+                        if (fs.existsSync(rawPath)) fs.unlinkSync(rawPath)
+                        if (fs.existsSync(finalPath)) {
+                            await conn.sendFile(m.chat, finalPath, 'ig.mp4', `✅ *Auto DL: Instagram (HD)*`, m, null, fwc)
+                            fs.unlinkSync(finalPath)
+                            success = true
+                        }
+                    }
+                } catch (ee) {
+                    console.error('yt-dlp Instagram failed, falling back to API URL')
+                }
 
-                await conn.sendFile(m.chat, finalPath, 'ig.mp4', `✅ *Auto DL: Instagram (HD)*`, m, null, fwc)
-                fs.unlinkSync(finalPath)
+                if (!success) {
+                    let url = data.dl_url || (data.result && data.result[0]?.url)
+                    if (url) await conn.sendFile(m.chat, url, 'ig.mp4', `✅ *Auto DL: Instagram*`, m, null, fwc)
+                    else throw new Error('Não foi possível obter a URL de download.')
+                }
                 m.react(done)
             }
         } catch (e) {
