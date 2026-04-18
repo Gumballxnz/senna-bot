@@ -82,7 +82,9 @@ handler.before = async m => {
             let fileName = (resDL.title === 'audio_video' || resDL.title.includes('yt_')) ? (confirmation[m.sender]?.title || resDL.title) : resDL.title
             if (fs.existsSync(resDL.filePath)) {
                 await conn.sendFile(m.chat, resDL.filePath, fileName + '.mp3', '', m, false, { mimetype: 'audio/mpeg', asDocument: chat?.useDocument })
-                fs.unlinkSync(resDL.filePath)
+                try {
+                    if (fs.existsSync(resDL.filePath)) fs.unlinkSync(resDL.filePath)
+                } catch(e) { console.error('Erro silencioso ao apagar audio:', e) }
                 m.react(done)
             }
         } catch (e) {
@@ -110,7 +112,9 @@ handler.before = async m => {
                     return m.reply(`❎ Tamanho excedido: ${(resDL.size / (1024 * 1024)).toFixed(2)} MB`)
                 }
                 await conn.sendFile(m.chat, resDL.filePath, fileName + '.mp4', `≡ *FG YTDL*\n\n▢ *📌Titulo* : ${fileName}`.trim(), m, false, { asDocument: true })
-                fs.unlinkSync(resDL.filePath)
+                try {
+                    if (fs.existsSync(resDL.filePath)) fs.unlinkSync(resDL.filePath)
+                } catch(e) {}
                 m.react(done)
             }
         } catch (e) {

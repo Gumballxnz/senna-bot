@@ -1,7 +1,7 @@
 
 import fg from 'fg-senna' 
-let free = 1000 // limite de descarga (Max 3GB)
-let prem = 2000
+let free = 1000 // limite de descarga
+let prem = 3000
 let handler = async (m, { conn, args, usedPrefix, command, isOwner, isPrems }) => {
 
 	if (!args[0]) throw `✳️ Insira un link`
