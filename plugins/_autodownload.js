@@ -72,11 +72,16 @@ export async function before(m, { conn, isOwner }) {
         try {
             const TEMP_DIR = path.join(process.cwd(), 'tmp')
             if (!fs.existsSync(TEMP_DIR)) fs.mkdirSync(TEMP_DIR, { recursive: true })
-            const filePath = path.join(TEMP_DIR, `fb_${Date.now()}.mp4`)
-            await execAsync(`yt-dlp -f "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best" --merge-output-format mp4 -o "${filePath}" "${link}"`, { timeout: 120000 })
-            if (!fs.existsSync(filePath)) throw new Error('Arquivo não baixado.')
-            await conn.sendFile(m.chat, filePath, 'facebook.mp4', `✅ *Auto DL: Facebook*`, m, null, fwc)
-            fs.unlinkSync(filePath)
+            const rawPath = path.join(TEMP_DIR, `fb_raw_${Date.now()}.mp4`)
+            const finalPath = path.join(TEMP_DIR, `fb_${Date.now()}.mp4`)
+            await execAsync(`yt-dlp -f "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best" --merge-output-format mp4 -o "${rawPath}" "${link}"`, { timeout: 120000 })
+            if (!fs.existsSync(rawPath)) throw new Error('Arquivo não baixado.')
+            // Transcodifica para MP4 limpo (H.264 + AAC) compatível com WhatsApp
+            await execAsync(`ffmpeg -i "${rawPath}" -c:v libx264 -preset ultrafast -crf 23 -c:a aac -b:a 128k -movflags +faststart -y "${finalPath}"`, { timeout: 180000 })
+            if (fs.existsSync(rawPath)) fs.unlinkSync(rawPath)
+            if (!fs.existsSync(finalPath)) throw new Error('Erro na transcodificação.')
+            await conn.sendFile(m.chat, finalPath, 'facebook.mp4', `✅ *Auto DL: Facebook*`, m, null, fwc)
+            fs.unlinkSync(finalPath)
             m.react(done)
         } catch (e) {
             console.error('AutoDL Facebook Error:', e)
