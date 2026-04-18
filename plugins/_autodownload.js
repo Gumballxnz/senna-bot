@@ -126,7 +126,7 @@ export async function before(m, { conn, isOwner }) {
         }
     }
 
-    // Facebook (yt-dlp assíncrono, sem Chrome/Puppeteer)
+    // Facebook (Híbrido)
     if (!found && facebookRegex.test(text)) {
         let link = text.match(facebookRegex)[0]
         found = true
@@ -136,14 +136,51 @@ export async function before(m, { conn, isOwner }) {
             if (!fs.existsSync(TEMP_DIR)) fs.mkdirSync(TEMP_DIR, { recursive: true })
             const rawPath = path.join(TEMP_DIR, `fb_raw_${Date.now()}.mp4`)
             const finalPath = path.join(TEMP_DIR, `fb_${Date.now()}.mp4`)
-            await execAsync(`yt-dlp -f "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best" --merge-output-format mp4 -o "${rawPath}" "${link}"`, { timeout: 120000 })
-            if (!fs.existsSync(rawPath)) throw new Error('Arquivo não baixado.')
-            // Transcodifica apeas o áudio e copia o vídeo intacto + faststart (leva apenas ~2 segundos)
-            await execAsync(`ffmpeg -i "${rawPath}" -c:v copy -c:a aac -b:a 128k -movflags +faststart -y "${finalPath}"`, { timeout: 180000 })
-            if (fs.existsSync(rawPath)) fs.unlinkSync(rawPath)
-            if (!fs.existsSync(finalPath)) throw new Error('Erro na transcodificação.')
-            await conn.sendFile(m.chat, finalPath, 'facebook.mp4', `✅ *Auto DL: Facebook*`, m, null, fwc)
-            fs.unlinkSync(finalPath)
+
+            let success = false
+            try {
+                await execAsync(`yt-dlp -f "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best" --merge-output-format mp4 -o "${rawPath}" "${link}"`, { timeout: 120000 })
+                if (fs.existsSync(rawPath)) {
+                    await execAsync(`ffmpeg -i "${rawPath}" -c:v copy -c:a aac -b:a 128k -movflags +faststart -y "${finalPath}"`, { timeout: 180000 })
+                    if (fs.existsSync(rawPath)) fs.unlinkSync(rawPath)
+                    if (fs.existsSync(finalPath)) {
+                        await conn.sendFile(m.chat, finalPath, 'fb.mp4', `✅ *Auto DL: Facebook (HD)*`, m, null, fwc)
+                        fs.unlinkSync(finalPath)
+                        success = true
+                    }
+                }
+            } catch (ee) {
+                console.error('yt-dlp bloqueado no Facebook AutoDL, ativando fallback tríplice')
+            }
+
+            if (!success) {
+                let url = null;
+                const fetch = (await import('node-fetch')).default;
+                
+                let sp = await fetch(`https://api.siputzx.my.id/api/d/facebook?url=${encodeURIComponent(link)}`).then(v => v.json()).catch(() => null);
+                url = sp?.data?.url || sp?.data?.hd || sp?.data?.sd;
+
+                if (!url) {
+                    let rz = await fetch(`https://api.ryzendesu.vip/api/downloader/fbdl?url=${encodeURIComponent(link)}`).then(v => v.json()).catch(() => null);
+                    url = rz?.url || rz?.data?.url || rz?.result?.url_hd || rz?.result?.url_sd;
+                }
+
+                if (!url) {
+                    let fgRes = await fg.fbdl(link).catch(() => null);
+                    url = fgRes?.HD || fgRes?.SD;
+                }
+
+                if (!url) throw new Error('Links e APIs bloqueadas.');
+
+                const filePath = path.join(TEMP_DIR, `fb_${Date.now()}.mp4`)
+                let dl = await fetch(url)
+                if (!dl.ok) throw new Error('Falha HTTP da API')
+                const { pipeline } = await import('stream/promises')
+                await pipeline(dl.body, fs.createWriteStream(filePath))
+
+                await conn.sendFile(m.chat, filePath, 'fb.mp4', `✅ *Auto DL: Facebook (API)*`, m, null, fwc)
+                try { fs.unlinkSync(filePath) } catch(e) {}
+            }
             m.react(done)
         } catch (e) {
             console.error('AutoDL Facebook Error:', e)
