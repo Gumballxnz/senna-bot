@@ -2,6 +2,7 @@ import fs from 'fs'
 import path from 'path'
 import { exec } from 'child_process'
 import { promisify } from 'util'
+import fg from 'fg-senna'
 
 const execAsync = promisify(exec)
 
@@ -46,7 +47,7 @@ let handler = async (m, { conn, text, args, usedPrefix, command }) => {
         }
 
         if (!url) {
-            import fg from 'fg-senna'
+            // Camada 3: fg-senna
             let fgRes = await fg.fbdl(args[0]).catch(() => null);
             url = fgRes?.HD || fgRes?.SD;
         }
