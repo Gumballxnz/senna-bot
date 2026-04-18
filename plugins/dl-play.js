@@ -26,28 +26,11 @@ let handler = async (m, { conn, args, text, usedPrefix, command }) => {
 
     let { title, thumbnail, url, timestamp, views, ago, seconds } = vid
 
-    // --- PESO DE ALTA PRECISÃO (Nova Lógica) ---
-    m.react('⏳')
-    let audioSize = (seconds * 0.016).toFixed(1) // Fallback math
-    let videoSize = (seconds * 0.12).toFixed(1)   // Fallback math
-
-    try {
-        // Pega tamanhos reais via yt-dlp em < 2 segundos
-        const { stdout } = await execAsync(`yt-dlp --print "audio: %(filesize_approx,filesize)s" --print "video: %(filesize_approx,filesize)s" -f "bestaudio/bestvideo+bestaudio" --ignore-errors "${url}"`, { timeout: 10000 })
-        if (stdout) {
-            let matches = stdout.match(/(audio|video): ([\d\.]+)(\w+)/g)
-            if (matches) {
-                matches.forEach(mStr => {
-                    let parts = mStr.split(': ')
-                    let val = parseFloat(parts[1])
-                    if (mStr.includes('audio')) audioSize = (val / (1024 * 1024)).toFixed(1)
-                    if (mStr.includes('video')) videoSize = (val / (1024 * 1024)).toFixed(1)
-                })
-            }
-        }
-    } catch (e) {
-        console.error('Erro na precisão de peso:', e.message)
-    }
+    // --- PREDIÇÃO DE PESO REFINADA (Instantânea) ---
+    // Áudio 128kbps ~ 1MB por minuto (0.016MB/s)
+    let audioSize = (seconds * 0.016).toFixed(1)
+    // Vídeo 720p ~ 6MB por minuto (0.1 MB/s) - Mais realista para Youtube Mobile
+    let videoSize = (seconds * 0.1).toFixed(1)
 
     m.react('🎧')
 
