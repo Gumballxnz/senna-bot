@@ -49,7 +49,6 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
         let tweetIdMatch = args[0].match(/\/status\/(\d+)/);
         let directUrl = null;
         let descStr = '';
-        const fetch = (await import('node-fetch')).default;
 
         // Camada 1: VX Twitter API (Native Discord Embed proxy - 100% Rate Limit Free)
         if (!success && tweetIdMatch) {
