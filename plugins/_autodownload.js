@@ -25,6 +25,7 @@ export async function before(m, { conn, isOwner }) {
     const mediafireRegex = /https?:\/\/(www\.)?mediafire\.com\/file\/[^\s]*/i
     const megaRegex = /https?:\/\/mega\.nz\/file\/[^\s]*/i
     const youtubeRegex = /https?:\/\/(www\.|m\.)?(youtube\.com|youtu\.be)\/[^\s]*/i
+    const twitterRegex = /https?:\/\/(www\.)?(twitter\.com|x\.com)\/[^\s]+/i
 
     let found = false
 
@@ -215,6 +216,65 @@ export async function before(m, { conn, isOwner }) {
             console.error('AutoDL Facebook Error:', e)
             m.react('❌')
             m.reply(`❎ Erro ao baixar Facebook: Verifique se o link é público.`)
+        }
+    }
+
+    // Twitter/X (vxTwitter Speed Mode)
+    if (!found && twitterRegex.test(text)) {
+        let link = text.match(twitterRegex)[0]
+        found = true
+        m.react(rwait)
+        try {
+            let tweetIdMatch = link.match(/\/status\/(\d+)/);
+            if (!tweetIdMatch) throw new Error('Link do Twitter inválido ou sem ID do post.');
+            
+            let id = tweetIdMatch[1];
+            let directUrl = null;
+            let descStr = '';
+            let success = false;
+            const fetch = (await import('node-fetch')).default;
+
+            // Camada 1: VX Twitter API
+            try {
+                let vx = await fetch(`https://api.vxtwitter.com/Twitter/status/${id}`).then(v => v.json());
+                if (vx && vx.media_extended && vx.media_extended.length > 0) {
+                    let videoMedia = vx.media_extended.find(xx => xx.type === 'video');
+                    if (videoMedia) directUrl = videoMedia.url;
+                    descStr = vx.text || '';
+                } else if (vx && vx.mediaURLs && vx.mediaURLs.length > 0) {
+                    directUrl = vx.mediaURLs[0];
+                    descStr = vx.text || '';
+                }
+                
+                if (directUrl) {
+                    let te = descStr ? `\n▢ *Desc:* ${descStr}` : '';
+                    await conn.sendFile(m.chat, directUrl, 'twitter.mp4', `✅ *Auto DL: Twitter/X*${te}`, m, null, fwc)
+                    success = true;
+                }
+            } catch(e) { }
+
+            // Camada 2: fxTwitter API
+            if (!success) {
+                try {
+                    let fx = await fetch(`https://api.fxtwitter.com/Twitter/status/${id}`).then(v => v.json());
+                    let videoMedia = fx?.tweet?.media?.video;
+                    if (videoMedia && videoMedia.url) { directUrl = videoMedia.url; }
+                    descStr = fx?.tweet?.text || '';
+
+                    if (directUrl) {
+                        let te = descStr ? `\n▢ *Desc:* ${descStr}` : '';
+                        await conn.sendFile(m.chat, directUrl, 'twitter.mp4', `✅ *Auto DL: Twitter/X*${te}`, m, null, fwc)
+                        success = true;
+                    }
+                } catch(e) { }
+            }
+
+            if (!success) throw new Error('Todas as conexões nativas do Twitter falharam.');
+            m.react(done)
+        } catch (e) {
+            console.error('AutoDL Twitter Error:', e)
+            m.react('❌')
+            m.reply(`❎ Erro ao processar Twitter via Auto DL.`)
         }
     }
 
