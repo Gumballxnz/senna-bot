@@ -17,6 +17,8 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
         const finalPath = path.join(TEMP_DIR, `tw_${Date.now()}.mp4`)
 
         let success = false
+        
+        // Camada 1: yt-dlp directo (melhor qualidade)
         try {
             await execAsync(`yt-dlp -f "b[vcodec^=avc]/b[vcodec^=h264]/hd/sd/bestvideo[ext=mp4]+bestaudio[ext=m4a]/best" --merge-output-format mp4 -o "${rawPath}" "${args[0]}"`, { timeout: 120000 })
             if (fs.existsSync(rawPath)) {
@@ -42,57 +44,57 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
             console.error('yt-dlp Twitter bloqueado, descendo para camada de APIs...')
         }
 
+        // Camada 2: Siputzx — enviar URL directo ao Baileys (evita bloqueio CDN da Oracle)
         if (!success) {
-            let url = null;
-            let descStr = '';
             const fetch = (await import('node-fetch')).default;
+            let descStr = '';
+            let directUrl = null;
             
-            // Camada 1: Siputzx
-            let sp = await fetch(`https://api.siputzx.my.id/api/d/twitter?url=${encodeURIComponent(args[0])}`).then(v => v.json()).catch(() => null);
-            url = sp?.data?.downloadLink || sp?.data?.video || sp?.data?.hd || sp?.data?.sd;
-            descStr = sp?.data?.videoDescription || '';
+            try {
+                let sp = await fetch(`https://api.siputzx.my.id/api/d/twitter?url=${encodeURIComponent(args[0])}`).then(v => v.json());
+                directUrl = sp?.data?.downloadLink || sp?.data?.video || sp?.data?.hd || sp?.data?.sd;
+                descStr = sp?.data?.videoDescription || '';
+            } catch(e) {}
 
-            if (!url) {
-                // Camada 2: Ryzendesu
-                let rz = await fetch(`https://api.ryzendesu.vip/api/downloader/twitter?url=${encodeURIComponent(args[0])}`).then(v => v.json()).catch(() => null);
-                url = rz?.url || rz?.data?.url || (rz?.data?.media && rz.data.media[0]?.url);
+            if (directUrl) {
+                // Enviando a URL directo para o Baileys fazer o download
+                // (o WhatsApp baixa pelo próprio servidor, contornando bloqueio do CDN na Oracle)
+                let te = descStr ? `\n▢ *Desc:* ${descStr}` : '';
+                await conn.sendFile(m.chat, directUrl, 'twitter.mp4', `✅ *Twitter/X*${te}`, m, null, { asDocument: false })
+                success = true
             }
-
-            if (!url) {
-                // Camada 3: fg-senna local
-                let tw = await fg.twitter(args[0]).catch(() => null)
-                url = tw?.HD || tw?.SD
-                descStr = tw?.desc || ''
-            }
-
-            if (!url) throw new Error('Falha HTTP da API Twitter');
-
-            let dl = await fetch(url)
-            if (!dl.ok) throw new Error('Falha de status no fetch')
-            const { pipeline } = await import('stream/promises')
-            await pipeline(dl.body, fs.createWriteStream(rawPath))
-
-            if (fs.existsSync(rawPath)) {
-                let codec = 'h264'
-                try {
-                    const { stdout } = await execAsync(`ffprobe -v error -select_streams v:0 -show_entries stream=codec_name -of default=noprint_wrappers=1:nokey=1 "${rawPath}"`)
-                    if (stdout) codec = stdout.trim()
-                } catch(e){}
-                
-                let ffmpegCmd = codec === 'h264' 
-                    ? `ffmpeg -i "${rawPath}" -c:v copy -c:a aac -b:a 128k -movflags +faststart -y "${finalPath}"`
-                    : `ffmpeg -i "${rawPath}" -c:v libx264 -preset fast -crf 28 -c:a aac -b:a 128k -movflags +faststart -y "${finalPath}"`
-                    
-                await execAsync(ffmpegCmd, { timeout: 180000 })
-                if (fs.existsSync(rawPath)) fs.unlinkSync(rawPath)
-            }
-    
-            if (!fs.existsSync(finalPath)) throw new Error('Erro na conversão FFmpeg API Twitter')
-
-            let te = descStr ? `\n▢ *Desc:* ${descStr}` : '';
-            await conn.sendFile(m.chat, finalPath, 'twitter.mp4', `✅ *Twitter/X (API)*${te}`, m, null, { asDocument: false })
-            try { fs.unlinkSync(finalPath) } catch(e) {}
         }
+
+        // Camada 3: Ryzendesu — mesma estratégia de URL directo
+        if (!success) {
+            const fetch = (await import('node-fetch')).default;
+            let directUrl = null;
+            
+            try {
+                let rz = await fetch(`https://api.ryzendesu.vip/api/downloader/twitter?url=${encodeURIComponent(args[0])}`).then(v => v.json());
+                directUrl = rz?.url || rz?.data?.url || (rz?.data?.media && rz.data.media[0]?.url);
+            } catch(e) {}
+
+            if (directUrl) {
+                await conn.sendFile(m.chat, directUrl, 'twitter.mp4', `✅ *Twitter/X*`, m, null, { asDocument: false })
+                success = true
+            }
+        }
+
+        // Camada 4: fg-senna local
+        if (!success) {
+            try {
+                let tw = await fg.twitter(args[0])
+                let url = tw?.HD || tw?.SD
+                if (url) {
+                    await conn.sendFile(m.chat, url, 'twitter.mp4', `✅ *Twitter/X*`, m, null, { asDocument: false })
+                    success = true
+                }
+            } catch(e) {}
+        }
+
+        if (!success) throw new Error('Todas as APIs do Twitter falharam.')
+
         m.react('✅')
     } catch (error) {
         console.error('Twitter DL Error:', error.message)
