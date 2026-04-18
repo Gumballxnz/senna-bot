@@ -20,7 +20,13 @@ let handler = async (m, { conn, args, text, usedPrefix, command }) => {
         throw `❎ Video não encontrado`
     }
 
-    let { title, thumbnail, url, timestamp, views, ago } = vid
+    let { title, thumbnail, url, timestamp, views, ago, seconds } = vid
+
+    // --- CÁLCULO DE PESO INSTANTÂNEO ---
+    // Áudio 128kbps = Exatos 16KB/s (0.016MB por segundo).
+    let audioSize = (seconds * 0.016).toFixed(1)
+    // Vídeo 720p/1080p costuma pesar cerca de 8 a 15 MB por minuto, média de ~0.2 MB/s.
+    let videoSize = (seconds * 0.20).toFixed(1)
 
     m.react('🎧')
 
@@ -33,8 +39,8 @@ let handler = async (m, { conn, args, text, usedPrefix, command }) => {
 └──────────────
 
 Responda com 1 ou 2:
-1 = MP3 (Áudio)
-2 = MP4 (Vídeo)
+1 = MP3 (Áudio)  ~ ${audioSize} MB 🎵
+2 = MP4 (Vídeo)  ~ ${videoSize} MB 🎬
 `
 
     await conn.sendFile(m.chat, thumbnail, "play.jpg", msg, m)
