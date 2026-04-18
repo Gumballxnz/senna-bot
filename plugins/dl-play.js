@@ -2,6 +2,10 @@
 import yts from 'yt-search'
 import { downloadYT } from '../lib/ytHelper.js'
 import fs from 'fs'
+import { exec } from 'child_process'
+import { promisify } from 'util'
+
+const execAsync = promisify(exec)
 
 let confirmation = {}
 
@@ -22,11 +26,28 @@ let handler = async (m, { conn, args, text, usedPrefix, command }) => {
 
     let { title, thumbnail, url, timestamp, views, ago, seconds } = vid
 
-    // --- CÁLCULO DE PESO INSTANTÂNEO ---
-    // Áudio 128kbps = Exatos 16KB/s (0.016MB por segundo).
-    let audioSize = (seconds * 0.016).toFixed(1)
-    // Vídeo 720p/1080p média real de ~0.12 MB/s.
-    let videoSize = (seconds * 0.12).toFixed(1)
+    // --- PESO DE ALTA PRECISÃO (Nova Lógica) ---
+    m.react('⏳')
+    let audioSize = (seconds * 0.016).toFixed(1) // Fallback math
+    let videoSize = (seconds * 0.12).toFixed(1)   // Fallback math
+
+    try {
+        // Pega tamanhos reais via yt-dlp em < 2 segundos
+        const { stdout } = await execAsync(`yt-dlp --print "audio: %(filesize_approx,filesize)s" --print "video: %(filesize_approx,filesize)s" -f "bestaudio/bestvideo+bestaudio" --ignore-errors "${url}"`, { timeout: 10000 })
+        if (stdout) {
+            let matches = stdout.match(/(audio|video): ([\d\.]+)(\w+)/g)
+            if (matches) {
+                matches.forEach(mStr => {
+                    let parts = mStr.split(': ')
+                    let val = parseFloat(parts[1])
+                    if (mStr.includes('audio')) audioSize = (val / (1024 * 1024)).toFixed(1)
+                    if (mStr.includes('video')) videoSize = (val / (1024 * 1024)).toFixed(1)
+                })
+            }
+        }
+    } catch (e) {
+        console.error('Erro na precisão de peso:', e.message)
+    }
 
     m.react('🎧')
 
