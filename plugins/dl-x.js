@@ -15,10 +15,11 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
         if (!fs.existsSync(TEMP_DIR)) fs.mkdirSync(TEMP_DIR, { recursive: true })
         const rawPath = path.join(TEMP_DIR, `tw_raw_${Date.now()}.mp4`)
         const finalPath = path.join(TEMP_DIR, `tw_${Date.now()}.mp4`)
+        const fetch = (await import('node-fetch')).default;
 
         let success = false
         
-        // Camada 1: yt-dlp directo (melhor qualidade)
+        // Camada 1: yt-dlp directo
         try {
             await execAsync(`yt-dlp -f "b[vcodec^=avc]/b[vcodec^=h264]/hd/sd/bestvideo[ext=mp4]+bestaudio[ext=m4a]/best" --merge-output-format mp4 -o "${rawPath}" "${args[0]}"`, { timeout: 120000 })
             if (fs.existsSync(rawPath)) {
@@ -44,56 +45,59 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
             console.error('yt-dlp Twitter bloqueado, descendo para camada de APIs...')
         }
 
-        // Camada 2: Siputzx — enviar URL directo ao Baileys (evita bloqueio CDN da Oracle)
-        if (!success) {
-            const fetch = (await import('node-fetch')).default;
-            let descStr = '';
-            let directUrl = null;
-            
+        // Extrair ID do tweet para a VX Twitter API
+        let tweetIdMatch = args[0].match(/\/status\/(\d+)/);
+        let directUrl = null;
+        let descStr = '';
+        const fetch = (await import('node-fetch')).default;
+
+        // Camada 1: VX Twitter API (Native Discord Embed proxy - 100% Rate Limit Free)
+        if (!success && tweetIdMatch) {
             try {
-                let sp = await fetch(`https://api.siputzx.my.id/api/d/twitter?url=${encodeURIComponent(args[0])}`).then(v => v.json());
-                directUrl = sp?.data?.downloadLink || sp?.data?.video || sp?.data?.hd || sp?.data?.sd;
-                descStr = sp?.data?.videoDescription || '';
-            } catch(e) {}
-
-            if (directUrl) {
-                // Enviando a URL directo para o Baileys fazer o download
-                // (o WhatsApp baixa pelo próprio servidor, contornando bloqueio do CDN na Oracle)
-                let te = descStr ? `\n▢ *Desc:* ${descStr}` : '';
-                await conn.sendFile(m.chat, directUrl, 'twitter.mp4', `✅ *Twitter/X*${te}`, m, null, { asDocument: false })
-                success = true
-            }
-        }
-
-        // Camada 3: Ryzendesu — mesma estratégia de URL directo
-        if (!success) {
-            const fetch = (await import('node-fetch')).default;
-            let directUrl = null;
-            
-            try {
-                let rz = await fetch(`https://api.ryzendesu.vip/api/downloader/twitter?url=${encodeURIComponent(args[0])}`).then(v => v.json());
-                directUrl = rz?.url || rz?.data?.url || (rz?.data?.media && rz.data.media[0]?.url);
-            } catch(e) {}
-
-            if (directUrl) {
-                await conn.sendFile(m.chat, directUrl, 'twitter.mp4', `✅ *Twitter/X*`, m, null, { asDocument: false })
-                success = true
-            }
-        }
-
-        // Camada 4: fg-senna local
-        if (!success) {
-            try {
-                let tw = await fg.twitter(args[0])
-                let url = tw?.HD || tw?.SD
-                if (url) {
-                    await conn.sendFile(m.chat, url, 'twitter.mp4', `✅ *Twitter/X*`, m, null, { asDocument: false })
+                let id = tweetIdMatch[1];
+                let vx = await fetch(`https://api.vxtwitter.com/Twitter/status/${id}`).then(v => v.json());
+                
+                if (vx && vx.media_extended && vx.media_extended.length > 0) {
+                    // Pega o primeiro media que for video
+                    let videoMedia = vx.media_extended.find(m => m.type === 'video');
+                    if (videoMedia) directUrl = videoMedia.url;
+                    descStr = vx.text || '';
+                } else if (vx && vx.mediaURLs && vx.mediaURLs.length > 0) {
+                    directUrl = vx.mediaURLs[0];
+                    descStr = vx.text || '';
+                }
+                
+                if (directUrl) {
+                    let te = descStr ? `\n▢ *Desc:* ${descStr}` : '';
+                    await conn.sendFile(m.chat, directUrl, 'twitter.mp4', `✅ *Twitter/X*${te}`, m, null, { asDocument: false })
                     success = true
                 }
-            } catch(e) {}
+            } catch(e) {
+                console.error('[Twitter Debug] vxTwitter falhou:', e.message)
+            }
         }
 
-        if (!success) throw new Error('Todas as APIs do Twitter falharam.')
+        // Camada 2: fxTwitter API (Fallback do Fallback)
+        if (!success && tweetIdMatch) {
+            try {
+                let id = tweetIdMatch[1];
+                let fx = await fetch(`https://api.fxtwitter.com/Twitter/status/${id}`).then(v => v.json());
+                
+                let videoMedia = fx?.tweet?.media?.video;
+                if (videoMedia && videoMedia.url) { directUrl = videoMedia.url; }
+                descStr = fx?.tweet?.text || '';
+
+                if (directUrl) {
+                    let te = descStr ? `\n▢ *Desc:* ${descStr}` : '';
+                    await conn.sendFile(m.chat, directUrl, 'twitter.mp4', `✅ *Twitter/X*${te}`, m, null, { asDocument: false })
+                    success = true
+                }
+            } catch(e) {
+                console.error('[Twitter Debug] fxTwitter falhou:', e.message)
+            }
+        }
+
+        if (!success) throw new Error('Falha global nas engrenagens de bypass do Twitter.')
 
         m.react('✅')
     } catch (error) {
