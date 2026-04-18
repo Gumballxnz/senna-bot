@@ -49,7 +49,8 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
             
             // Camada 1: Siputzx
             let sp = await fetch(`https://api.siputzx.my.id/api/d/twitter?url=${encodeURIComponent(args[0])}`).then(v => v.json()).catch(() => null);
-            url = sp?.data?.video || sp?.data?.hd || sp?.data?.sd;
+            url = sp?.data?.downloadLink || sp?.data?.video || sp?.data?.hd || sp?.data?.sd;
+            descStr = sp?.data?.videoDescription || '';
 
             if (!url) {
                 // Camada 2: Ryzendesu
