@@ -172,14 +172,23 @@ export async function before(m, { conn, isOwner }) {
 
                 if (!url) throw new Error('Links e APIs bloqueadas.');
 
-                const filePath = path.join(TEMP_DIR, `fb_${Date.now()}.mp4`)
+                const rawFilePath = path.join(TEMP_DIR, `fb_raw_${Date.now()}.mp4`)
+                const finalFilePath = path.join(TEMP_DIR, `fb_${Date.now()}.mp4`)
+                
                 let dl = await fetch(url)
                 if (!dl.ok) throw new Error('Falha HTTP da API')
                 const { pipeline } = await import('stream/promises')
-                await pipeline(dl.body, fs.createWriteStream(filePath))
+                await pipeline(dl.body, fs.createWriteStream(rawFilePath))
 
-                await conn.sendFile(m.chat, filePath, 'fb.mp4', `✅ *Auto DL: Facebook (API)*`, m, null, fwc)
-                try { fs.unlinkSync(filePath) } catch(e) {}
+                if (fs.existsSync(rawFilePath)) {
+                    await execAsync(`ffmpeg -i "${rawFilePath}" -c:v copy -c:a aac -b:a 128k -movflags +faststart -y "${finalFilePath}"`, { timeout: 180000 })
+                    if (fs.existsSync(rawFilePath)) fs.unlinkSync(rawFilePath)
+                }
+        
+                if (!fs.existsSync(finalFilePath)) throw new Error('Erro na conversão FFmpeg da API.')
+
+                await conn.sendFile(m.chat, finalFilePath, 'fb.mp4', `✅ *Auto DL: Facebook (API)*`, m, null, fwc)
+                try { fs.unlinkSync(finalFilePath) } catch(e) {}
             }
             m.react(done)
         } catch (e) {
