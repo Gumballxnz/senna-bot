@@ -77,28 +77,32 @@ export async function before(m, { conn, isOwner }) {
         }
     }
 
-    // Instagram (fg-senna)
+    // Instagram (Híbrido)
     if (!found && instagramRegex.test(text)) {
         let link = text.match(instagramRegex)[0]
         found = true
         m.react(rwait)
         try {
-            let data = await fg.igdl(link)
-            if (data.result && data.result.length > 1) {
-                // É um Carrossel/Galeria do Insta! Usar a API para as fotos em série.
+            let data = await fg.igdl(link).catch(() => null)
+            let success = false
+            
+            // Tentativa 1: Galeria (Loop)
+            if (data?.result && data.result.length > 1) {
                 for (let i of data.result) {
                     await conn.sendFile(m.chat, i.url, 'instagram.mp4', `✅ *Auto DL: Instagram*`, m, null, fwc)
                 }
+                success = true
                 m.react(done)
-            } else {
-                // É um único POST (Video ou Foto). Ligar o motor yt-dlp!
-                const TEMP_DIR = path.join(process.cwd(), 'tmp')
-                if (!fs.existsSync(TEMP_DIR)) fs.mkdirSync(TEMP_DIR, { recursive: true })
-                const rawPath = path.join(TEMP_DIR, `ig_raw_${Date.now()}.mp4`)
-                const finalPath = path.join(TEMP_DIR, `ig_${Date.now()}.mp4`)
-                
-                let success = false
+            } 
+            
+            // Tentativa 2: yt-dlp local (Alta Qualidade)
+            if (!success) {
                 try {
+                    const TEMP_DIR = path.join(process.cwd(), 'tmp')
+                    if (!fs.existsSync(TEMP_DIR)) fs.mkdirSync(TEMP_DIR, { recursive: true })
+                    const rawPath = path.join(TEMP_DIR, `ig_raw_${Date.now()}.mp4`)
+                    const finalPath = path.join(TEMP_DIR, `ig_${Date.now()}.mp4`)
+                    
                     await execAsync(`yt-dlp -f "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best" --merge-output-format mp4 -o "${rawPath}" "${link}"`, { timeout: 120000 })
                     if (fs.existsSync(rawPath)) {
                         await execAsync(`ffmpeg -i "${rawPath}" -c:v copy -c:a aac -b:a 128k -movflags +faststart -y "${finalPath}"`, { timeout: 180000 })
@@ -109,17 +113,32 @@ export async function before(m, { conn, isOwner }) {
                             success = true
                         }
                     }
-                } catch (ee) {
-                    console.error('yt-dlp Instagram failed, falling back to API URL')
+                } catch(e) {}
+            }
+
+            // Tentativa 3: APIs de Fallback
+            if (!success) {
+                const fetch = (await import('node-fetch')).default;
+                let url = data?.dl_url || (data?.result && data.result[0]?.url)
+                
+                if (!url) {
+                    let rz = await fetch(`https://api.ryzendesu.vip/api/downloader/igdl?url=${encodeURIComponent(link)}`).then(v => v.json()).catch(() => null);
+                    url = rz?.url || rz?.data?.url || rz?.result?.[0]?.url;
+                }
+                
+                if (!url) {
+                    let sp = await fetch(`https://api.siputzx.my.id/api/d/instagram?url=${encodeURIComponent(link)}`).then(v => v.json()).catch(() => null);
+                    url = sp?.data?.[0]?.url || sp?.data?.url;
                 }
 
-                if (!success) {
-                    let url = data.dl_url || (data.result && data.result[0]?.url)
-                    if (url) await conn.sendFile(m.chat, url, 'ig.mp4', `✅ *Auto DL: Instagram*`, m, null, fwc)
-                    else throw new Error('Não foi possível obter a URL de download.')
+                if (url) {
+                    await conn.sendFile(m.chat, url, 'ig.mp4', `✅ *Auto DL: Instagram*`, m, null, fwc)
+                    success = true
                 }
-                m.react(done)
             }
+
+            if (!success) throw new Error('Não foi possível obter a URL de download em nenhum motor.')
+            m.react(done)
         } catch (e) {
             console.error('AutoDL Instagram Error:', e)
             m.react('❌')
@@ -322,20 +341,29 @@ export async function before(m, { conn, isOwner }) {
         found = true
         m.react(rwait)
         try {
-            let { filePath, size } = await downloadYT(link, 'video')
+            let { filePath, size, title } = await downloadYT(link, 'video')
             if (fs.existsSync(filePath)) {
-                if (size > 1024 * 1024 * 1024 && !isOwner) {
+                // Limite de 2GB (Limite do WhatsApp Document)
+                if (size > 2000 * 1024 * 1024) {
                     fs.unlinkSync(filePath)
-                    return m.reply('✳️ Vídeo muito grande para AutoDL (Max 1GB). Use o comando manual para links maiores.')
+                    return m.reply('✳️ O arquivo superou o limite de 2GB do WhatsApp.')
                 }
-                await conn.sendFile(m.chat, filePath, 'video.mp4', `✅ *Auto DL: YouTube*`, m)
+
+                // Envio como DOCUMENTO para garantir que vídeos pesados (Filmes) não falhem no upload
+                await conn.sendFile(m.chat, filePath, `${title || 'video'}.mp4`, `✅ *Auto DL: YouTube*`, m, null, { asDocument: true })
+                
                 fs.unlinkSync(filePath)
                 m.react(done)
             }
         } catch (e) {
             console.error('AutoDL YouTube Error:', e)
             m.react('❌')
-            m.reply(`❎ Erro ao baixar YouTube: ${e.message}`)
+            // Se o erro for upload, avisar especificamente
+            if (e.message.includes('upload')) {
+                m.reply(`❎ Erro de Transmissão: O ficheiro é muito grande ou a conexão com o WhatsApp caiu. Tente novamente.`)
+            } else {
+                m.reply(`❎ Erro ao baixar YouTube: ${e.message}`)
+            }
         }
     }
 
