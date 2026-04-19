@@ -115,7 +115,9 @@ const connectionOptions = {
         ),
     },
     markOnlineOnConnect: true,
-    generateHighQualityLinkPreview: true,
+    generateHighQualityLinkPreview: false,
+    defaultQueryTimeoutMs: 300000,
+    connectTimeoutMs: 60000,
     msgRetryCounterCache,
     userDevicesCache,
     getMessage: async (key) => {

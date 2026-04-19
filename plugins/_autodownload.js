@@ -344,8 +344,13 @@ export async function before(m, { conn, isOwner }) {
                     return m.reply('✳️ O arquivo superou o limite de 2GB do WhatsApp.')
                 }
 
-                // Envio como DOCUMENTO para garantir que vídeos pesados (Filmes) não falhem no upload
-                await conn.sendFile(m.chat, filePath, `${title || 'video'}.mp4`, `✅ *Auto DL: YouTube*`, m, null, { asDocument: true })
+                // Envio via STREAM DIRETO para poupar RAM e evitar quedas em arquivos de 400MB+
+                await conn.sendMessage(m.chat, { 
+                    document: { url: filePath }, 
+                    mimetype: 'video/mp4', 
+                    fileName: `${title || 'video'}.mp4`,
+                    caption: `✅ *Auto DL: YouTube (HD)*`
+                }, { quoted: m })
                 
                 fs.unlinkSync(filePath)
                 m.react(done)
