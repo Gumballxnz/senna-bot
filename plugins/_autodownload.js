@@ -14,6 +14,10 @@ export async function before(m, { conn, isOwner }) {
     if (!chat || !chat.autodl) return false
 
     let text = m.text
+    // Se a mensagem começa com um prefixo de comando, ignorar AutoDL
+    // Isso evita o download duplo quando alguém usa .tiktok, .fb, etc.
+    if (global.prefix.test(text)) return false
+
     const tiktokRegex = /https?:\/\/(www\.|v[mt]\.|vt\.)?tiktok\.com\/[^\s]*/i
     const facebookRegex = /https?:\/\/(www\.|web\.|m\.)?(facebook\.com|fb\.watch)\/[^\s]*/i
     const instagramRegex = /https?:\/\/(www\.)?instagram\.com\/(p|reel|tv|stories)\/[^\s]+|https?:\/\/instagr\.am\/[^\s]+/i
@@ -52,7 +56,7 @@ export async function before(m, { conn, isOwner }) {
                         if (fs.existsSync(rawPath)) fs.unlinkSync(rawPath)
                         if (fs.existsSync(finalPath)) {
                             await conn.sendFile(m.chat, finalPath, 'tiktok.mp4', `✅ *Auto DL: TikTok (HD)*`, m, null, fwc)
-                            fs.unlinkSync(finalPath)
+                            if (fs.existsSync(finalPath)) fs.unlinkSync(finalPath)
                             success = true
                         }
                     }
@@ -104,7 +108,7 @@ export async function before(m, { conn, isOwner }) {
                         if (fs.existsSync(rawPath)) fs.unlinkSync(rawPath)
                         if (fs.existsSync(finalPath)) {
                             await conn.sendFile(m.chat, finalPath, 'ig.mp4', `✅ *Auto DL: Instagram (HD)*`, m, null, fwc)
-                            fs.unlinkSync(finalPath)
+                            if (fs.existsSync(finalPath)) fs.unlinkSync(finalPath)
                             success = true
                         }
                     }
@@ -352,7 +356,7 @@ export async function before(m, { conn, isOwner }) {
                     caption: `✅ *Auto DL: YouTube (HD)*`
                 }, { quoted: m })
                 
-                fs.unlinkSync(filePath)
+                if (fs.existsSync(filePath)) fs.unlinkSync(filePath)
                 m.react(done)
             }
         } catch (e) {
