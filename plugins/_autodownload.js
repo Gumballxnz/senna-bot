@@ -13,15 +13,10 @@ export async function before(m, { conn, isOwner }) {
     let chat = global.db.data.chats[m.chat]
     if (!chat || !chat.autodl) return false
 
-    let text = m.text.trim()
-
-    // Se a mensagem começa com um prefixo de comando, ignorar AutoDL
-    // Isso evita o download duplo quando alguém usa .tiktok, .fb, etc.
-    if (global.prefix.test(text)) return false
-
+    let text = m.text
     const tiktokRegex = /https?:\/\/(www\.|v[mt]\.|vt\.)?tiktok\.com\/[^\s]*/i
     const facebookRegex = /https?:\/\/(www\.|web\.|m\.)?(facebook\.com|fb\.watch)\/[^\s]*/i
-    const instagramRegex = /https?:\/\/(www\.)?instagram\.com\/(p|reel|tv)\/[^\s]*/i
+    const instagramRegex = /https?:\/\/(www\.)?instagram\.com\/(p|reel|tv|stories)\/[^\s]+|https?:\/\/instagr\.am\/[^\s]+/i
     const mediafireRegex = /https?:\/\/(www\.)?mediafire\.com\/file\/[^\s]*/i
     const megaRegex = /https?:\/\/mega\.nz\/file\/[^\s]*/i
     const youtubeRegex = /https?:\/\/(www\.|m\.)?(youtube\.com|youtu\.be)\/[^\s]*/i
