@@ -204,19 +204,11 @@ const isPrems = isROwner || global.prems.map(v => normalize(v)).includes(sender)
 
 
         if (opts['queque'] && m.text && !(isMods || isPrems)) {
-            let queque = this.msgqueque, time = 1000 * 5
-            const previousID = queque[queque.length - 1]
-            queque.push(m.id || m.key.id)
-
-            if (opts.queque && m.text && !(isMods || isPrems)) {
-   let previousID = this.msgqueque[this.msgqueque.length - 1]
-   this.msgqueque.push(m.id || m.key.id)
-
-   while (this.msgqueque.includes(previousID)) {
-      await delay(5000)
-   }
-}
-
+            const previousID = this.msgqueque[this.msgqueque.length - 1]
+            this.msgqueque.push(m.id || m.key.id)
+            while (this.msgqueque.includes(previousID)) {
+                await delay(5000)
+            }
         }
 
         if (m.isBaileys)
@@ -225,7 +217,7 @@ const isPrems = isROwner || global.prems.map(v => normalize(v)).includes(sender)
 
         let usedPrefix
         
-        const groupMetadata = m.isGroup ? await this.groupMetadata(m.chat).catch(() => null) : null
+        const groupMetadata = m.isGroup ? await conn.getGroupMetadata(m.chat) : null
         const participants = groupMetadata?.participants || []
 const user = (m.isGroup ? participants.find(u => this.decodeJid(u.id || u.jid) === this.decodeJid(m.sender)) : {}) || {}
 const bot = (m.isGroup ? participants.find(u => { let id = this.decodeJid(u.id || u.jid); return id === this.decodeJid(this.user.jid) || id === this.decodeJid(this.user.lid) }) : {}) || {}
@@ -332,7 +324,7 @@ const isBotAdmin = !!bot?.admin
                     let user = global.db.data.users[m.sender]
                     if (name != 'owner-unbanchat.js' && chat?.isBanned)
                         return // Except this
-                    if (name != 'owner-unbanuser.js' && user?.banned)
+                    if (name != 'owner-unbanUser.js' && user?.banned)
                         return
                 }
                 if (plugin.rowner && plugin.owner && !(isROwner || isOwner)) { // Both Owner
@@ -505,7 +497,10 @@ if (m.isGroup && m.sender) {
         }
 
         try {
-            if (!opts['noprint']) await (await import(`./lib/print.js`)).default(m, this)
+            if (!opts['noprint']) {
+                if (!global._printModule) global._printModule = (await import('./lib/print.js')).default
+                await global._printModule(m, this)
+            }
         } catch (e) {
             console.log(m, m.quoted, e)
         }

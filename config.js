@@ -7,9 +7,9 @@ global.owner = [
   ['258879116693', '🇯🇵𝙶𝙷𝙾𝚂𝚃 𝙶𝚄𝙼𝙱𝙰𝙻𝙻 ╰⁔╯', true]
 ] //Numeros de owner 
 
-global.mods = ['']
+global.mods = []
 global.prems = ['50999079501', '573166917092']
-global.botNumber = ['']  //-- numero del bot
+global.botNumber = []  //-- numero del bot
 global.APIs = { // API Prefix
   // name: 'https://website' 
   fg_ss: 'https://fg-ss.ddns.net',

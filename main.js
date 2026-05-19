@@ -166,21 +166,23 @@ if (!opts['test']) {
 
 /* Clear */
 async function clearTmp() {
-  const tmp = [tmpdir(), join(__dirname, './tmp')]
-  const filename = []
-  
-  tmp.forEach(dirname => {
-    if (!fs.existsSync(dirname)) fs.mkdirSync(dirname, { recursive: true })
-    readdirSync(dirname).forEach(file => filename.push(join(dirname, file)))
-  })
-
-  return filename.map(file => {
+  const dirs = [tmpdir(), join(__dirname, './tmp')]
+  const now = Date.now()
+  for (const dir of dirs) {
     try {
-      const stats = statSync(file)
-      if (stats.isFile() && (Date.now() - stats.mtimeMs >= 1000 * 60 * 1)) return unlinkSync(file) // 1 minuto
+      if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
+      const files = await fs.promises.readdir(dir)
+      for (const file of files) {
+        try {
+          const filePath = join(dir, file)
+          const stats = await fs.promises.stat(filePath)
+          if (stats.isFile() && (now - stats.mtimeMs >= 1000 * 60 * 1)) {
+            await fs.promises.unlink(filePath)
+          }
+        } catch (e) {}
+      }
     } catch (e) {}
-    return false
-  })
+  }
 }
 
 // Auto clear tmp interval incondicional removido (Evita dupla limpeza, agora usa o da linha 196)
@@ -260,6 +262,7 @@ global.conn.store = store
     conn.ev.off('message.delete', conn.onDelete)
     conn.ev.off('connection.update', conn.connectionUpdate)
     conn.ev.off('creds.update', conn.credsUpdate)
+    if (conn.messagesUpdateHandler) conn.ev.off('messages.update', conn.messagesUpdateHandler)
   }
 
   conn.welcome = 'Olá, @user\nBem-vindo(a) ao grupo @group 🎉'
@@ -281,16 +284,17 @@ global.conn.store = store
   conn.ev.on('groups.update', conn.groupsUpdate)
   conn.ev.on('connection.update', conn.connectionUpdate)
   conn.ev.on('creds.update', conn.credsUpdate)
-    
-  conn.ev.on('messages.update', async (updates) => {
+
+  conn.messagesUpdateHandler = async (updates) => {
     for (const update of updates) {
-        try {
-            await handler.deleteUpdate.call(conn, update)
-        } catch (e) {
-            console.error('Error en delete listener:', e)
-        }
+      try {
+        await handler.deleteUpdate.call(conn, update)
+      } catch (e) {
+        console.error('Error en delete listener:', e)
+      }
     }
-})
+  }
+  conn.ev.on('messages.update', conn.messagesUpdateHandler)
 
   isInit = false
   return true
