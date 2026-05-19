@@ -67,11 +67,11 @@ handler.command = ['play','playvid']
 
 export default handler
 
-handler.before = async m => {
+handler.before = async (m, { conn }) => {
     if (m.isBaileys) return; 
     if (!(m.sender in confirmation)) return; 
 
-    let { sender, timeout, url, chat } = confirmation[m.sender];
+    let { sender, timeout, url, chat, title } = confirmation[m.sender];
     
     if (m.text.trim() === '1') {
         clearTimeout(timeout);
@@ -79,7 +79,7 @@ handler.before = async m => {
         m.react(rwait)
         try {
             let resDL = await downloadYT(url, 'audio')
-            let fileName = (resDL.title === 'audio_video' || resDL.title.includes('yt_')) ? (confirmation[m.sender]?.title || resDL.title) : resDL.title
+            let fileName = (resDL.title === 'audio_video' || resDL.title.includes('yt_')) ? (title || resDL.title) : resDL.title
             if (fs.existsSync(resDL.filePath)) {
                 await conn.sendFile(m.chat, resDL.filePath, fileName + '.mp3', '', m, false, { mimetype: 'audio/mpeg', asDocument: chat?.useDocument })
                 try {
@@ -99,7 +99,7 @@ handler.before = async m => {
         m.react(rwait)
         try {
             let resDL = await downloadYT(url, 'video')
-            let fileName = (resDL.title === 'audio_video' || resDL.title.includes('yt_')) ? (confirmation[m.sender]?.title || resDL.title || 'video') : resDL.title
+            let fileName = (resDL.title === 'audio_video' || resDL.title.includes('yt_')) ? (title || resDL.title || 'video') : resDL.title
             if (fs.existsSync(resDL.filePath)) {
                 let user = global.db.data.users[m.sender] || {}
                 let isPrems = user.premium
