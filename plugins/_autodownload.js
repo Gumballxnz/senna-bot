@@ -96,12 +96,12 @@ export async function before(m, { conn, isOwner }) {
             
             // Tentativa 2: yt-dlp local (Alta Qualidade)
             if (!success) {
+                const TEMP_DIR = path.join(process.cwd(), 'tmp')
+                if (!fs.existsSync(TEMP_DIR)) fs.mkdirSync(TEMP_DIR, { recursive: true })
+                const rawPath = path.join(TEMP_DIR, `ig_raw_${Date.now()}.mp4`)
+                const finalPath = path.join(TEMP_DIR, `ig_${Date.now()}.mp4`)
+
                 try {
-                    const TEMP_DIR = path.join(process.cwd(), 'tmp')
-                    if (!fs.existsSync(TEMP_DIR)) fs.mkdirSync(TEMP_DIR, { recursive: true })
-                    const rawPath = path.join(TEMP_DIR, `ig_raw_${Date.now()}.mp4`)
-                    const finalPath = path.join(TEMP_DIR, `ig_${Date.now()}.mp4`)
-                    
                     await execAsync(`yt-dlp -f "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best" --merge-output-format mp4 -o "${rawPath}" "${link}"`, { timeout: 120000 })
                     if (fs.existsSync(rawPath)) {
                         await execAsync(`ffmpeg -i "${rawPath}" -c:v copy -c:a aac -b:a 128k -movflags +faststart -y "${finalPath}"`, { timeout: 180000 })
@@ -112,27 +112,39 @@ export async function before(m, { conn, isOwner }) {
                             success = true
                         }
                     }
-                } catch(e) {}
+                } catch(e) {
+                    console.error('❌ [AutoDL IG] yt-dlp falhou:', e.message)
+                    try { if (fs.existsSync(rawPath)) fs.unlinkSync(rawPath) } catch(_) {}
+                    try { if (fs.existsSync(finalPath)) fs.unlinkSync(finalPath) } catch(_) {}
+                }
             }
 
             // Tentativa 3: APIs de Fallback
             if (!success) {
                 const fetch = (await import('node-fetch')).default;
                 let url = data?.dl_url || (data?.result && data.result[0]?.url)
-                
+
                 if (!url) {
-                    let rz = await fetch(`https://api.ryzendesu.vip/api/downloader/igdl?url=${encodeURIComponent(link)}`).then(v => v.json()).catch(() => null);
-                    url = rz?.url || rz?.data?.url || rz?.result?.[0]?.url;
+                    try {
+                        let rz = await fetch(`https://api.ryzendesu.vip/api/downloader/igdl?url=${encodeURIComponent(link)}`, { timeout: 10000 }).then(v => v.json()).catch(() => null);
+                        url = rz?.url || rz?.data?.url || rz?.result?.[0]?.url;
+                    } catch(e) {}
                 }
-                
+
                 if (!url) {
-                    let sp = await fetch(`https://api.siputzx.my.id/api/d/instagram?url=${encodeURIComponent(link)}`).then(v => v.json()).catch(() => null);
-                    url = sp?.data?.[0]?.url || sp?.data?.url;
+                    try {
+                        let sp = await fetch(`https://api.siputzx.my.id/api/d/instagram?url=${encodeURIComponent(link)}`, { timeout: 10000 }).then(v => v.json()).catch(() => null);
+                        url = sp?.data?.[0]?.url || sp?.data?.url;
+                    } catch(e) {}
                 }
 
                 if (url) {
-                    await conn.sendFile(m.chat, url, 'ig.mp4', `✅ *Auto DL: Instagram*`, m, null, fwc)
-                    success = true
+                    try {
+                        await conn.sendFile(m.chat, url, 'ig.mp4', `✅ *Auto DL: Instagram*`, m, null, fwc)
+                        success = true
+                    } catch(e) {
+                        console.error('❌ [AutoDL IG] Envio da API falhou:', e.message)
+                    }
                 }
             }
 

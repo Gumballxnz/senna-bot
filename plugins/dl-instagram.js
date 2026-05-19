@@ -11,46 +11,94 @@ let handler = async (m, { conn, text, args, usedPrefix, command }) => {
   if (!args[0]) throw `✳️ Insira un Link de Instagram`
   m.react(rwait)
 
+  let data = null
+  let success = false
+
+  // Motor 1: fg-senna (API externa)
   try {
-    let data = await fg.igdl(args[0])
-    if (data.result && data.result.length > 1) {
-        // Galeria de imagens/videos, usar API
-        for (let i of data.result) {
-            await conn.sendFile(m.chat, i.url, 'instagram.mp4', `✅ Resultado`, m, null, fwc)
-        }
-        m.react(done)
-    } else {
-        // Video ou foto unica
-        const TEMP_DIR = path.join(process.cwd(), 'tmp')
-        if (!fs.existsSync(TEMP_DIR)) fs.mkdirSync(TEMP_DIR, { recursive: true })
-        const rawPath = path.join(TEMP_DIR, `ig_raw_${Date.now()}.mp4`)
-        const finalPath = path.join(TEMP_DIR, `ig_${Date.now()}.mp4`)
+    data = await fg.igdl(args[0])
+  } catch (e) {
+    console.error('❌ [IGDL] fg-senna falhou:', e.message)
+  }
 
-        let success = false
-        try {
-            await execAsync(`yt-dlp -f "best[ext=mp4]/best" --merge-output-format mp4 -o "${rawPath}" "${args[0]}"`, { timeout: 120000 })
-            if (fs.existsSync(rawPath)) {
-                await execAsync(`ffmpeg -i "${rawPath}" -c:v copy -c:a aac -b:a 128k -movflags +faststart -y "${finalPath}"`, { timeout: 180000 })
-                if (fs.existsSync(rawPath)) fs.unlinkSync(rawPath)
-                if (fs.existsSync(finalPath)) {
-                    await conn.sendFile(m.chat, finalPath, 'ig.mp4', `✅ *Instagram (HD)*`, m, null, fwc)
-                    fs.unlinkSync(finalPath)
-                    success = true
-                }
-            }
-        } catch (ee) {
-            console.error('yt-dlp Instagram manual failed, falling back to API URL')
-        }
-
-        if (!success) {
-            let url = data.dl_url || (data.result && data.result[0]?.url)
-            if (url) await conn.sendFile(m.chat, url, 'ig.mp4', `✅ Resultado`, m, null, fwc)
-            else throw new Error('Não foi possível obter a URL de download.')
-        }
-        m.react(done)
+  // Galeria de imagens/videos (se API retornou múltiplos resultados)
+  if (data?.result && data.result.length > 1) {
+    try {
+      for (let i of data.result) {
+        await conn.sendFile(m.chat, i.url, 'instagram.mp4', `✅ Resultado`, m, null, fwc)
+      }
+      m.react(done)
+      return
+    } catch (e) {
+      console.error('❌ [IGDL] Galeria falhou:', e.message)
     }
-  } catch (error) {
-    m.reply("error tente de novo mais tarde") 
+  }
+
+  // Motor 2: yt-dlp local (Alta Qualidade)
+  const TEMP_DIR = path.join(process.cwd(), 'tmp')
+  if (!fs.existsSync(TEMP_DIR)) fs.mkdirSync(TEMP_DIR, { recursive: true })
+  const rawPath = path.join(TEMP_DIR, `ig_raw_${Date.now()}.mp4`)
+  const finalPath = path.join(TEMP_DIR, `ig_${Date.now()}.mp4`)
+
+  try {
+    await execAsync(`yt-dlp -f "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best" --merge-output-format mp4 -o "${rawPath}" "${args[0]}"`, { timeout: 120000 })
+    if (fs.existsSync(rawPath)) {
+      await execAsync(`ffmpeg -i "${rawPath}" -c:v copy -c:a aac -b:a 128k -movflags +faststart -y "${finalPath}"`, { timeout: 180000 })
+      if (fs.existsSync(rawPath)) fs.unlinkSync(rawPath)
+      if (fs.existsSync(finalPath)) {
+        await conn.sendFile(m.chat, finalPath, 'ig.mp4', `✅ *Instagram (HD)*`, m, null, fwc)
+        fs.unlinkSync(finalPath)
+        success = true
+      }
+    }
+  } catch (ee) {
+    console.error('❌ [IGDL] yt-dlp falhou:', ee.message)
+    try { if (fs.existsSync(rawPath)) fs.unlinkSync(rawPath) } catch(e) {}
+    try { if (fs.existsSync(finalPath)) fs.unlinkSync(finalPath) } catch(e) {}
+  }
+
+  // Motor 3: URL direta da API (se disponível)
+  if (!success && data) {
+    try {
+      let url = data.dl_url || (data.result && data.result[0]?.url)
+      if (url) {
+        await conn.sendFile(m.chat, url, 'ig.mp4', `✅ Resultado`, m, null, fwc)
+        success = true
+      }
+    } catch (e) {
+      console.error('❌ [IGDL] URL direta falhou:', e.message)
+    }
+  }
+
+  // Motor 4: APIs de fallback externas
+  if (!success) {
+    const fetch = (await import('node-fetch')).default
+    const encodedUrl = encodeURIComponent(args[0])
+    const apis = [
+      { name: 'instavideosave', url: `https://www.instavideosave.net/api/instagram`, method: 'POST', body: JSON.stringify({ url: args[0] }), headers: { 'Content-Type': 'application/json' } },
+    ]
+
+    for (let api of apis) {
+      try {
+        let res = await fetch(api.url, { method: api.method, body: api.body, headers: api.headers, timeout: 15000 })
+        let json = await res.json().catch(() => null)
+        let url = json?.data?.[0]?.url || json?.data?.url || json?.url || json?.result?.[0]?.url
+        if (url) {
+          await conn.sendFile(m.chat, url, 'ig.mp4', `✅ *Instagram (${api.name})*`, m, null, fwc)
+          success = true
+          break
+        }
+      } catch (e) {
+        console.error(`❌ [IGDL] API ${api.name} falhou:`, e.message)
+      }
+    }
+  }
+
+  if (!success) {
+    m.react('❌')
+    m.reply(`❎ Nenhum motor conseguiu baixar este link do Instagram.\n\n💡 *Possíveis causas:*\n▢ O post é privado\n▢ O link está quebrado\n▢ Instagram bloqueou o download\n\nTente novamente mais tarde.`)
+  } else {
+    m.react(done)
   }
 }
 handler.help = ['instagram'].map(v => v + ' <url>')
