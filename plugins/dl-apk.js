@@ -1,4 +1,5 @@
 import fetch from 'node-fetch'
+import fg from 'fg-senna'
 
 let handler = async (m, { conn, text, usedPrefix, command }) => {
   if (!text) throw `✳️ Pesquise um aplicativo!\n\n📌 Exemplo:\n*${usedPrefix + command}* Spotify\n*${usedPrefix + command}* WhatsApp`
@@ -6,34 +7,34 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
   m.react('⏳')
 
   try {
-    // Busca o APK diretamente na Aptoide API (que fornece link de download real)
-    let res = await fetch(`https://ws75.aptoide.com/api/7/apps/search?query=${encodeURIComponent(text)}&limit=1`)
-    let data = await res.json()
-
-    if (!data.datalist || !data.datalist.list || data.datalist.list.length === 0) {
-      throw 'App não encontrado na base de dados.'
+    // 1. Pesquisa o App no APKPure via fg-senna
+    let searchRes = await fg.apks(text)
+    if (!searchRes || searchRes.length === 0) {
+      throw 'App não encontrado. Tente um nome mais específico.'
     }
 
-    let app = data.datalist.list[0]
-    
-    // Extraindo detalhes
-    let name = app.name
-    let developer = app.developer ? app.developer.name : 'Desconhecido'
-    let version = app.file ? app.file.vername : 'N/A'
-    let sizeMB = app.size ? (app.size / 1048576).toFixed(2) + ' MB' : 'Desconhecido'
-    let downloads = app.stats ? app.stats.downloads : 'N/A'
-    let icon = app.icon
-    let apkUrl = app.file ? app.file.path : null
+    let firstApp = searchRes[0]
 
-    if (!apkUrl) throw 'Não foi possível extrair o link do ficheiro APK.'
+    // 2. Coleta os detalhes de download do pacote exato
+    let appInfo = await fg.apkdl(firstApp.pkg)
+    if (!appInfo || (!appInfo.download && !firstApp.dl_apk)) {
+       throw 'Não foi possível extrair o link do ficheiro APK.'
+    }
 
-    let caption = `╭─「 📱 *APTOIDE DOWNLOADER* 」
+    let name = appInfo.name || firstApp.name
+    let developer = appInfo.developer || firstApp.developer || 'Desconhecido'
+    let version = appInfo.version || 'N/A'
+    let sizeMB = appInfo.size || 'Desconhecido'
+    let icon = appInfo.icon || firstApp.icon
+    let apkUrl = appInfo.download || firstApp.dl_apk
+
+    let caption = `╭─「 📱 *APKPURE DOWNLOADER* 」
 │
 │ 📌 *Nome:* ${name}
 │ 👤 *Dev:* ${developer}
-│ 📥 *Downloads:* ${downloads}
 │ 📦 *Tamanho:* ${sizeMB}
 │ 🆙 *Versão:* ${version}
+│ 🔍 *Pacote:* ${firstApp.pkg}
 │
 │ ⏳ *Enviando o ficheiro APK, por favor aguarde...*
 ╰──────────────`

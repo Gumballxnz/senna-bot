@@ -138,7 +138,7 @@ conn.ev.on('creds.update', saveCreds)
 // O método de emparelhamento por número foi substituído pelo scanner de QR Code.
 //--
 if (!state.creds.registered) {
-    let phoneNumber = "258876615436"
+    let phoneNumber = "258871828596"
     setTimeout(async () => {
         try {
             let code = await conn.requestPairingCode(phoneNumber)
@@ -147,7 +147,7 @@ if (!state.creds.registered) {
         } catch (e) {
             console.error('Erro ao gerar código de pareamento: ', e)
         }
-    }, 4000)
+    }, 10000)
 }
 
 conn.isInit = false
