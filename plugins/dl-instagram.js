@@ -21,20 +21,29 @@ let handler = async (m, { conn, text, args, usedPrefix, command }) => {
     console.error('❌ [IGDL] fg-senna falhou:', e.message)
   }
 
-  // Galeria de imagens/videos (se API retornou múltiplos resultados)
-  if (data?.result && data.result.length > 1) {
-    try {
-      for (let i of data.result) {
-        await conn.sendFile(m.chat, i.url, 'instagram.mp4', `✅ Resultado`, m, null, fwc)
+  // Motor 1: Galeria de imagens/videos ou Mídia Única (se API retornou resultados)
+  if (data) {
+    let urls = []
+    if (data.result && data.result.length >= 1) {
+      urls = data.result.map(i => i.url)
+    } else if (data.dl_url) {
+      urls = [data.dl_url]
+    }
+
+    if (urls.length >= 1) {
+      try {
+        for (let url of urls) {
+          await conn.sendFile(m.chat, url, 'instagram.mp4', `✅ Resultado`, m, null, fwc)
+        }
+        m.react(done)
+        return
+      } catch (e) {
+        console.error('❌ [IGDL] Envio direto da API falhou:', e.message)
       }
-      m.react(done)
-      return
-    } catch (e) {
-      console.error('❌ [IGDL] Galeria falhou:', e.message)
     }
   }
 
-  // Motor 2: yt-dlp local (Alta Qualidade)
+  // Motor 2: yt-dlp local (Alta Qualidade como fallback)
   const TEMP_DIR = path.join(process.cwd(), 'tmp')
   if (!fs.existsSync(TEMP_DIR)) fs.mkdirSync(TEMP_DIR, { recursive: true })
   const rawPath = path.join(TEMP_DIR, `ig_raw_${Date.now()}.mp4`)
@@ -55,19 +64,6 @@ let handler = async (m, { conn, text, args, usedPrefix, command }) => {
     console.error('❌ [IGDL] yt-dlp falhou:', ee.message)
     try { if (fs.existsSync(rawPath)) fs.unlinkSync(rawPath) } catch(e) {}
     try { if (fs.existsSync(finalPath)) fs.unlinkSync(finalPath) } catch(e) {}
-  }
-
-  // Motor 3: URL direta da API (se disponível)
-  if (!success && data) {
-    try {
-      let url = data.dl_url || (data.result && data.result[0]?.url)
-      if (url) {
-        await conn.sendFile(m.chat, url, 'ig.mp4', `✅ Resultado`, m, null, fwc)
-        success = true
-      }
-    } catch (e) {
-      console.error('❌ [IGDL] URL direta falhou:', e.message)
-    }
   }
 
   // Motor 4: APIs de fallback externas

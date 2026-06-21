@@ -41,8 +41,12 @@ export async function before(m, { conn, isOwner }) {
                     await conn.sendFile(m.chat, img, 'tiktok.png', '', m, null, fwc)
                 }
                 m.react(done)
+            } else if (data && data.result && data.result.play) {
+                // É um VÍDEO! Usar a URL direta da API (Muito mais rápido e economiza RAM/CPU)
+                await conn.sendFile(m.chat, data.result.play, 'tiktok.mp4', `✅ *Auto DL: TikTok*`, m, null, fwc)
+                m.react(done)
             } else {
-                // É um VÍDEO! Ligar o motor yt-dlp (Qualidade Maxima H264 Cópia)
+                // Fallback local caso a API não tenha o vídeo direto
                 const TEMP_DIR = path.join(process.cwd(), 'tmp')
                 if (!fs.existsSync(TEMP_DIR)) fs.mkdirSync(TEMP_DIR, { recursive: true })
                 const rawPath = path.join(TEMP_DIR, `tk_raw_${Date.now()}.mp4`)
@@ -61,12 +65,10 @@ export async function before(m, { conn, isOwner }) {
                         }
                     }
                 } catch (ee) {
-                    console.error('yt-dlp TikTok failed, falling back to API URL')
+                    console.error('yt-dlp TikTok failed')
                 }
 
-                if (!success && data.result.play) {
-                    await conn.sendFile(m.chat, data.result.play, 'tiktok.mp4', `✅ *Auto DL: TikTok*`, m, null, fwc)
-                }
+                if (!success) throw new Error('Não foi possível obter o link do vídeo TikTok')
                 m.react(done)
             }
         } catch (e) {
@@ -85,8 +87,8 @@ export async function before(m, { conn, isOwner }) {
             let data = await fg.igdl(link).catch(() => null)
             let success = false
             
-            // Tentativa 1: Galeria (Loop)
-            if (data?.result && data.result.length > 1) {
+            // Tentativa 1: Galeria / Mídia Única (Loop/Envio Direto da API)
+            if (data?.result && data.result.length >= 1) {
                 for (let i of data.result) {
                     await conn.sendFile(m.chat, i.url, 'instagram.mp4', `✅ *Auto DL: Instagram*`, m, null, fwc)
                 }
@@ -163,39 +165,9 @@ export async function before(m, { conn, isOwner }) {
         found = true
         m.react(rwait)
         try {
-            const TEMP_DIR = path.join(process.cwd(), 'tmp')
-            if (!fs.existsSync(TEMP_DIR)) fs.mkdirSync(TEMP_DIR, { recursive: true })
-            const rawPath = path.join(TEMP_DIR, `fb_raw_${Date.now()}.mp4`)
-            const finalPath = path.join(TEMP_DIR, `fb_${Date.now()}.mp4`)
-
             let success = false
+            let url = null;
             try {
-                await execAsync(`yt-dlp -f "b[vcodec^=avc]/b[vcodec^=h264]/hd/sd/bestvideo[ext=mp4]+bestaudio[ext=m4a]/best" --merge-output-format mp4 -o "${rawPath}" "${link}"`, { timeout: 120000 })
-                if (fs.existsSync(rawPath)) {
-                    let codec = 'h264'
-                    try {
-                        const { stdout } = await execAsync(`ffprobe -v error -select_streams v:0 -show_entries stream=codec_name -of default=noprint_wrappers=1:nokey=1 "${rawPath}"`)
-                        if (stdout) codec = stdout.trim()
-                    } catch(e){}
-                    
-                    let ffmpegCmd = codec === 'h264' 
-                        ? `ffmpeg -i "${rawPath}" -c:v copy -c:a aac -b:a 128k -movflags +faststart -y "${finalPath}"`
-                        : `ffmpeg -i "${rawPath}" -c:v libx264 -preset fast -crf 28 -c:a aac -b:a 128k -movflags +faststart -y "${finalPath}"`
-        
-                    await execAsync(ffmpegCmd, { timeout: 180000 })
-                    if (fs.existsSync(rawPath)) fs.unlinkSync(rawPath)
-                    if (fs.existsSync(finalPath)) {
-                        await conn.sendFile(m.chat, finalPath, 'fb.mp4', `✅ *Auto DL: Facebook (HD)*`, m, null, fwc)
-                        fs.unlinkSync(finalPath)
-                        success = true
-                    }
-                }
-            } catch (ee) {
-                console.error('yt-dlp bloqueado no Facebook AutoDL, ativando fallback tríplice')
-            }
-
-            if (!success) {
-                let url = null;
                 const fetch = (await import('node-fetch')).default;
                 
                 let sp = await fetch(`https://api.siputzx.my.id/api/d/facebook?url=${encodeURIComponent(link)}`).then(v => v.json()).catch(() => null);
@@ -211,36 +183,48 @@ export async function before(m, { conn, isOwner }) {
                     url = fgRes?.HD || fgRes?.SD;
                 }
 
-                if (!url) throw new Error('Links e APIs bloqueadas.');
-
-                const rawFilePath = path.join(TEMP_DIR, `fb_raw_${Date.now()}.mp4`)
-                const finalFilePath = path.join(TEMP_DIR, `fb_${Date.now()}.mp4`)
-                
-                let dl = await fetch(url)
-                if (!dl.ok) throw new Error('Falha HTTP da API')
-                const { pipeline } = await import('stream/promises')
-                await pipeline(dl.body, fs.createWriteStream(rawFilePath))
-
-                if (fs.existsSync(rawFilePath)) {
-                    let codec = 'h264'
-                    try {
-                        const { stdout } = await execAsync(`ffprobe -v error -select_streams v:0 -show_entries stream=codec_name -of default=noprint_wrappers=1:nokey=1 "${rawFilePath}"`)
-                        if (stdout) codec = stdout.trim()
-                    } catch(e){}
-                    
-                    let ffmpegCmd = codec === 'h264' 
-                        ? `ffmpeg -i "${rawFilePath}" -c:v copy -c:a aac -b:a 128k -movflags +faststart -y "${finalFilePath}"`
-                        : `ffmpeg -i "${rawFilePath}" -c:v libx264 -preset fast -crf 28 -c:a aac -b:a 128k -movflags +faststart -y "${finalFilePath}"`
-                        
-                    await execAsync(ffmpegCmd, { timeout: 180000 })
-                    if (fs.existsSync(rawFilePath)) fs.unlinkSync(rawFilePath)
+                if (url) {
+                    await conn.sendFile(m.chat, url, 'fb.mp4', `✅ *Auto DL: Facebook*`, m, null, fwc)
+                    success = true
                 }
-        
-                if (!fs.existsSync(finalFilePath)) throw new Error('Erro na conversão FFmpeg da API.')
-
-                await conn.sendFile(m.chat, finalFilePath, 'fb.mp4', `✅ *Auto DL: Facebook (API)*`, m, null, fwc)
-                try { fs.unlinkSync(finalFilePath) } catch(e) {}
+            } catch (apiErr) {
+                console.error('Facebook DL API fallback failed, falling back to local tools:', apiErr.message)
             }
+
+            if (!success) {
+                // Ligar o motor yt-dlp local (como último recurso)
+                const TEMP_DIR = path.join(process.cwd(), 'tmp')
+                if (!fs.existsSync(TEMP_DIR)) fs.mkdirSync(TEMP_DIR, { recursive: true })
+                const rawPath = path.join(TEMP_DIR, `fb_raw_${Date.now()}.mp4`)
+                const finalPath = path.join(TEMP_DIR, `fb_${Date.now()}.mp4`)
+
+                try {
+                    await execAsync(`yt-dlp -f "b[vcodec^=avc]/b[vcodec^=h264]/hd/sd/bestvideo[ext=mp4]+bestaudio[ext=m4a]/best" --merge-output-format mp4 -o "${rawPath}" "${link}"`, { timeout: 120000 })
+                    if (fs.existsSync(rawPath)) {
+                        let codec = 'h264'
+                        try {
+                            const { stdout } = await execAsync(`ffprobe -v error -select_streams v:0 -show_entries stream=codec_name -of default=noprint_wrappers=1:nokey=1 "${rawPath}"`)
+                            if (stdout) codec = stdout.trim()
+                        } catch(e){}
+                        
+                        let ffmpegCmd = codec === 'h264' 
+                            ? `ffmpeg -i "${rawPath}" -c:v copy -c:a aac -b:a 128k -movflags +faststart -y "${finalPath}"`
+                            : `ffmpeg -i "${rawPath}" -c:v libx264 -preset fast -crf 28 -c:a aac -b:a 128k -movflags +faststart -y "${finalPath}"`
+            
+                        await execAsync(ffmpegCmd, { timeout: 180000 })
+                        if (fs.existsSync(rawPath)) fs.unlinkSync(rawPath)
+                        if (fs.existsSync(finalPath)) {
+                            await conn.sendFile(m.chat, finalPath, 'fb.mp4', `✅ *Auto DL: Facebook (HD)*`, m, null, fwc)
+                            fs.unlinkSync(finalPath)
+                            success = true
+                        }
+                    }
+                } catch (ee) {
+                    console.error('yt-dlp Facebook local failed:', ee.message)
+                }
+            }
+
+            if (!success) throw new Error('Não foi possível baixar o Facebook através das APIs ou localmente')
             m.react(done)
         } catch (e) {
             console.error('AutoDL Facebook Error:', e)

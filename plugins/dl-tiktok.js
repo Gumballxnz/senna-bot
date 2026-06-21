@@ -34,23 +34,26 @@ let handler = async (m, { conn, text, args, usedPrefix, command }) => {
             const finalPath = path.join(TEMP_DIR, `tt_${Date.now()}.mp4`)
 
             let success = false
-            try {
-                await execAsync(`yt-dlp -f "best[ext=mp4]/best" --merge-output-format mp4 -o "${rawPath}" "${args[0]}"`, { timeout: 120000 })
-                if (fs.existsSync(rawPath)) {
-                    await execAsync(`ffmpeg -i "${rawPath}" -c:v copy -c:a aac -b:a 128k -movflags +faststart -y "${finalPath}"`, { timeout: 180000 })
-                    if (fs.existsSync(rawPath)) fs.unlinkSync(rawPath)
-                    if (fs.existsSync(finalPath)) {
-                        await conn.sendFile(m.chat, finalPath, 'tiktok.mp4', tex, m, null, fwc);
-                        fs.unlinkSync(finalPath)
-                        success = true
-                    }
-                }
-            } catch (ee) {
-                console.error('yt-dlp TikTok manual failed, falling back to API URL')
+            if (data.result.play) {
+                await conn.sendFile(m.chat, data.result.play, 'tiktok.mp4', tex, m, null, fwc);
+                success = true
             }
 
-            if (!success && data.result.play) {
-                await conn.sendFile(m.chat, data.result.play, 'tiktok.mp4', tex, m, null, fwc);
+            if (!success) {
+                try {
+                    await execAsync(`yt-dlp -f "best[ext=mp4]/best" --merge-output-format mp4 -o "${rawPath}" "${args[0]}"`, { timeout: 120000 })
+                    if (fs.existsSync(rawPath)) {
+                        await execAsync(`ffmpeg -i "${rawPath}" -c:v copy -c:a aac -b:a 128k -movflags +faststart -y "${finalPath}"`, { timeout: 180000 })
+                        if (fs.existsSync(rawPath)) fs.unlinkSync(rawPath)
+                        if (fs.existsSync(finalPath)) {
+                            await conn.sendFile(m.chat, finalPath, 'tiktok.mp4', tex, m, null, fwc);
+                            fs.unlinkSync(finalPath)
+                            success = true
+                        }
+                    }
+                } catch (ee) {
+                    console.error('yt-dlp TikTok manual failed')
+                }
             }
             m.react(done)
         } else {
