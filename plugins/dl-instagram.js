@@ -11,35 +11,56 @@ let handler = async (m, { conn, text, args, usedPrefix, command }) => {
   if (!args[0]) throw `✳️ Insira un Link de Instagram`
   m.react(rwait)
 
-  let data = null
   let success = false
 
-  // Motor 1: fg-senna (API externa)
+  // Motor 1: Cobalt API (Principal - Rápido e Seguro)
   try {
-    data = await fg.igdl(args[0])
-  } catch (e) {
-    console.error('❌ [IGDL] fg-senna falhou:', e.message)
-  }
-
-  // Motor 1: Galeria de imagens/videos ou Mídia Única (se API retornou resultados)
-  if (data) {
-    let urls = []
-    if (data.result && data.result.length >= 1) {
-      urls = data.result.map(i => i.url)
-    } else if (data.dl_url) {
-      urls = [data.dl_url]
-    }
-
-    if (urls.length >= 1) {
-      try {
-        for (let url of urls) {
+    const { downloadCobalt } = await import('../lib/ytHelper.js')
+    let cobaltRes = await downloadCobalt(args[0])
+    if (cobaltRes) {
+      if (cobaltRes.isPicker) {
+        for (let url of cobaltRes.items) {
           await conn.sendFile(m.chat, url, 'instagram.mp4', `✅ Resultado`, m, null, fwc)
         }
+        success = true
         m.react(done)
         return
-      } catch (e) {
-        console.error('❌ [IGDL] Envio direto da API falhou:', e.message)
+      } else if (fs.existsSync(cobaltRes.filePath)) {
+        await conn.sendFile(m.chat, cobaltRes.filePath, cobaltRes.title || 'instagram.mp4', `✅ *Instagram (Cobalt)*`, m, null, fwc)
+        if (fs.existsSync(cobaltRes.filePath)) fs.unlinkSync(cobaltRes.filePath)
+        success = true
+        m.react(done)
+        return
       }
+    }
+  } catch (e) {
+    console.error('❌ [IGDL] Cobalt falhou:', e.message)
+  }
+
+  // Motor 2: fg-senna (API externa)
+  let data = null
+  if (!success) {
+    try {
+      data = await fg.igdl(args[0])
+      if (data) {
+        let urls = []
+        if (data.result && data.result.length >= 1) {
+          urls = data.result.map(i => i.url)
+        } else if (data.dl_url) {
+          urls = [data.dl_url]
+        }
+
+        if (urls.length >= 1) {
+          for (let url of urls) {
+            await conn.sendFile(m.chat, url, 'instagram.mp4', `✅ Resultado`, m, null, fwc)
+          }
+          success = true
+          m.react(done)
+          return
+        }
+      }
+    } catch (e) {
+      console.error('❌ [IGDL] fg-senna falhou:', e.message)
     }
   }
 

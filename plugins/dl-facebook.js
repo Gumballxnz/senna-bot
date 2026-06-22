@@ -12,33 +12,48 @@ let handler = async (m, { conn, text, args, usedPrefix, command }) => {
 
   try {
     let success = false
-    let url = null;
     
+    // Camada 0: Cobalt API (Principal)
     try {
-        const fetch = (await import('node-fetch')).default;
-        
-        // Camada 1: Siputzx
-        let sp = await fetch(`https://api.siputzx.my.id/api/d/facebook?url=${encodeURIComponent(args[0])}`).then(v => v.json()).catch(() => null);
-        url = sp?.data?.url || sp?.data?.hd || sp?.data?.sd;
-
-        if (!url) {
-            // Camada 2: Ryzendesu
-            let rz = await fetch(`https://api.ryzendesu.vip/api/downloader/fbdl?url=${encodeURIComponent(args[0])}`).then(v => v.json()).catch(() => null);
-            url = rz?.url || rz?.data?.url || rz?.result?.url_hd || rz?.result?.url_sd;
-        }
-
-        if (!url) {
-            // Camada 3: fg-senna
-            let fgRes = await fg.fbdl(args[0]).catch(() => null);
-            url = fgRes?.HD || fgRes?.SD;
-        }
-
-        if (url) {
-            await conn.sendFile(m.chat, url, 'fb.mp4', `✅ *Facebook*`, m, null, { asDocument: false })
+        const { downloadCobalt } = await import('../lib/ytHelper.js')
+        let cobaltRes = await downloadCobalt(args[0])
+        if (cobaltRes && !cobaltRes.isPicker && fs.existsSync(cobaltRes.filePath)) {
+            await conn.sendFile(m.chat, cobaltRes.filePath, cobaltRes.title || 'fb.mp4', `✅ *Facebook (Cobalt)*`, m, null, { asDocument: false })
+            if (fs.existsSync(cobaltRes.filePath)) fs.unlinkSync(cobaltRes.filePath)
             success = true
         }
-    } catch (apiErr) {
-        console.error('Facebook DL API fallback failed, falling back to local tools:', apiErr.message)
+    } catch (cobaltErr) {
+        console.error('Facebook Cobalt DL failed:', cobaltErr.message)
+    }
+
+    if (!success) {
+        let url = null;
+        try {
+            const fetch = (await import('node-fetch')).default;
+            
+            // Camada 1: Siputzx
+            let sp = await fetch(`https://api.siputzx.my.id/api/d/facebook?url=${encodeURIComponent(args[0])}`).then(v => v.json()).catch(() => null);
+            url = sp?.data?.url || sp?.data?.hd || sp?.data?.sd;
+
+            if (!url) {
+                // Camada 2: Ryzendesu
+                let rz = await fetch(`https://api.ryzendesu.vip/api/downloader/fbdl?url=${encodeURIComponent(args[0])}`).then(v => v.json()).catch(() => null);
+                url = rz?.url || rz?.data?.url || rz?.result?.url_hd || rz?.result?.url_sd;
+            }
+
+            if (!url) {
+                // Camada 3: fg-senna
+                let fgRes = await fg.fbdl(args[0]).catch(() => null);
+                url = fgRes?.HD || fgRes?.SD;
+            }
+
+            if (url) {
+                await conn.sendFile(m.chat, url, 'fb.mp4', `✅ *Facebook*`, m, null, { asDocument: false })
+                success = true
+            }
+        } catch (apiErr) {
+            console.error('Facebook DL API fallback failed, falling back to local tools:', apiErr.message)
+        }
     }
 
     if (!success) {

@@ -119,7 +119,11 @@ global.db.data.statsMsg ||= {} //contador de mensaje por grupo
     if (!global.db.data.settings)
         global.db.data.settings = {}
 
-    if (this.user?.jid) {
+    // Compute botJid robustly — fallback to decoding this.user.id if .jid is lost after reconnect
+    const botJid = this.user?.jid || (this.user?.id ? this.decodeJid(this.user.id) : null)
+    if (botJid) {
+        // Re-set .jid so the rest of the code (plugins, enable.js, etc.) can use it
+        if (!this.user.jid) this.user.jid = botJid
 
         const settingDefaults = {
             self: false,
@@ -130,10 +134,10 @@ global.db.data.statsMsg ||= {} //contador de mensaje por grupo
             sologp: false
         }
 
-        if (!global.db.data.settings[this.user.jid])
-            global.db.data.settings[this.user.jid] = {}
+        if (!global.db.data.settings[botJid])
+            global.db.data.settings[botJid] = {}
 
-        settings = global.db.data.settings[this.user.jid]
+        settings = global.db.data.settings[botJid]
 
         for (let key in settingDefaults) {
             if (!(key in settings)) {

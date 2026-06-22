@@ -1,4 +1,5 @@
 import fg from 'fg-senna'
+import fs from 'fs'
 
 let handler = async (m, { conn, args, usedPrefix, command }) => {
     if (!args[0]) throw `📌 Exemplo :\n*${usedPrefix + command}* https://twitter.com/fernandavasro/status/1569741835555291139?t=ADxk8P3Z3prq8USIZUqXCg&s=19`
@@ -54,6 +55,28 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
                 }
             } catch(e) {
                 console.error('[Twitter Debug] fxTwitter falhou:', e.message)
+            }
+        }
+
+        // Camada 3: Cobalt API Fallback (Evita falha global)
+        if (!success) {
+            try {
+                const { downloadCobalt } = await import('../lib/ytHelper.js')
+                let cobaltRes = await downloadCobalt(args[0])
+                if (cobaltRes) {
+                    if (cobaltRes.isPicker) {
+                        for (let url of cobaltRes.items) {
+                            await conn.sendFile(m.chat, url, 'twitter.mp4', `✅ *Twitter/X (Cobalt)*`, m, null, { asDocument: false })
+                        }
+                        success = true
+                    } else if (fs.existsSync(cobaltRes.filePath)) {
+                        await conn.sendFile(m.chat, cobaltRes.filePath, cobaltRes.title || 'twitter.mp4', `✅ *Twitter/X (Cobalt)*`, m, null, { asDocument: false })
+                        if (fs.existsSync(cobaltRes.filePath)) fs.unlinkSync(cobaltRes.filePath)
+                        success = true
+                    }
+                }
+            } catch (e) {
+                console.error('[Twitter Debug] Cobalt fallback falhou:', e.message)
             }
         }
 

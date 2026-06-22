@@ -25,34 +25,63 @@ export async function before(m, { conn, isOwner }) {
     const megaRegex = /https?:\/\/mega\.nz\/file\/[^\s]*/i
     const youtubeRegex = /https?:\/\/(www\.|m\.)?(youtube\.com|youtu\.be)\/[^\s]*/i
     const twitterRegex = /https?:\/\/(www\.)?(twitter\.com|x\.com)\/[^\s]+/i
+    const pinterestRegex = /https?:\/\/(www\.)?(pinterest\.com\/pin|pin\.it)\/[^\s]*/i
 
     let found = false
 
-    // TikTok (fg-senna)
+    // TikTok (Cobalt / fg-senna)
     if (tiktokRegex.test(text)) {
         let link = text.match(tiktokRegex)[0]
         found = true
         m.react(rwait)
         try {
-            let data = await fg.tiktok(link)
-            if (data && data.result && data.result.images) {
-                // É um Carrossel de Imagens! Usar a API.
-                for (let img of data.result.images) {
-                    await conn.sendFile(m.chat, img, 'tiktok.png', '', m, null, fwc)
+            let success = false
+            
+            // Tentativa 1: Cobalt API (Principal - Evita bloqueio)
+            try {
+                const { downloadCobalt } = await import('../lib/ytHelper.js')
+                let cobaltRes = await downloadCobalt(link)
+                if (cobaltRes) {
+                    if (cobaltRes.isPicker) {
+                        for (let url of cobaltRes.items) {
+                            await conn.sendFile(m.chat, url, 'tiktok.png', '', m, null, fwc)
+                        }
+                        success = true
+                        m.react(done)
+                    } else if (fs.existsSync(cobaltRes.filePath)) {
+                        await conn.sendFile(m.chat, cobaltRes.filePath, 'tiktok.mp4', `✅ *Auto DL: TikTok (Cobalt)*`, m, null, fwc)
+                        if (fs.existsSync(cobaltRes.filePath)) fs.unlinkSync(cobaltRes.filePath)
+                        success = true
+                        m.react(done)
+                    }
                 }
-                m.react(done)
-            } else if (data && data.result && data.result.play) {
-                // É um VÍDEO! Usar a URL direta da API (Muito mais rápido e economiza RAM/CPU)
-                await conn.sendFile(m.chat, data.result.play, 'tiktok.mp4', `✅ *Auto DL: TikTok*`, m, null, fwc)
-                m.react(done)
-            } else {
-                // Fallback local caso a API não tenha o vídeo direto
+            } catch (ee) {
+                console.error('Cobalt TikTok failed, falling back to fg-senna...')
+            }
+
+            // Tentativa 2: fg-senna
+            if (!success) {
+                let data = await fg.tiktok(link)
+                if (data && data.result && data.result.images) {
+                    for (let img of data.result.images) {
+                        await conn.sendFile(m.chat, img, 'tiktok.png', '', m, null, fwc)
+                    }
+                    success = true
+                    m.react(done)
+                } else if (data && data.result && data.result.play) {
+                    await conn.sendFile(m.chat, data.result.play, 'tiktok.mp4', `✅ *Auto DL: TikTok*`, m, null, fwc)
+                    success = true
+                    m.react(done)
+                }
+            }
+
+            // Tentativa 3: Local yt-dlp
+            if (!success) {
                 const TEMP_DIR = path.join(process.cwd(), 'tmp')
                 if (!fs.existsSync(TEMP_DIR)) fs.mkdirSync(TEMP_DIR, { recursive: true })
                 const rawPath = path.join(TEMP_DIR, `tk_raw_${Date.now()}.mp4`)
                 const finalPath = path.join(TEMP_DIR, `tk_${Date.now()}.mp4`)
                 
-                let success = false
                 try {
                     await execAsync(`yt-dlp -f "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best" --merge-output-format mp4 -o "${rawPath}" "${link}"`, { timeout: 120000 })
                     if (fs.existsSync(rawPath)) {
@@ -62,15 +91,15 @@ export async function before(m, { conn, isOwner }) {
                             await conn.sendFile(m.chat, finalPath, 'tiktok.mp4', `✅ *Auto DL: TikTok (HD)*`, m, null, fwc)
                             if (fs.existsSync(finalPath)) fs.unlinkSync(finalPath)
                             success = true
+                            m.react(done)
                         }
                     }
                 } catch (ee) {
                     console.error('yt-dlp TikTok failed')
                 }
-
-                if (!success) throw new Error('Não foi possível obter o link do vídeo TikTok')
-                m.react(done)
             }
+
+            if (!success) throw new Error('Não foi possível obter o link do vídeo TikTok')
         } catch (e) {
             console.error('AutoDL TikTok Error:', e)
             m.react('❌')
@@ -95,6 +124,32 @@ export async function before(m, { conn, isOwner }) {
                 success = true
                 m.react(done)
             } 
+            
+            // Tentativa 1.5: Cobalt API (Hospedado/Rápido) - Evita bloqueio de IP da VPS
+            if (!success) {
+                try {
+                    const { downloadCobalt } = await import('../lib/ytHelper.js')
+                    let cobaltRes = await downloadCobalt(link)
+                    if (cobaltRes) {
+                        if (cobaltRes.isPicker) {
+                            // Carrossel de Imagens/Vídeos
+                            for (let url of cobaltRes.items) {
+                                await conn.sendFile(m.chat, url, 'instagram.mp4', `✅ *Auto DL: Instagram*`, m, null, fwc)
+                            }
+                            success = true
+                            m.react(done)
+                        } else if (fs.existsSync(cobaltRes.filePath)) {
+                            // Mídia Única
+                            await conn.sendFile(m.chat, cobaltRes.filePath, cobaltRes.title || 'instagram.mp4', `✅ *Auto DL: Instagram (Cobalt)*`, m, null, fwc)
+                            if (fs.existsSync(cobaltRes.filePath)) fs.unlinkSync(cobaltRes.filePath)
+                            success = true
+                            m.react(done)
+                        }
+                    }
+                } catch (e) {
+                    console.error('❌ [AutoDL IG] Cobalt fallback failed:', e.message)
+                }
+            }
             
             // Tentativa 2: yt-dlp local (Alta Qualidade)
             if (!success) {
@@ -166,29 +221,46 @@ export async function before(m, { conn, isOwner }) {
         m.react(rwait)
         try {
             let success = false
-            let url = null;
+            
+            // Tentativa 1: Cobalt API (Principal - Evita bloqueio de IP da VPS)
             try {
-                const fetch = (await import('node-fetch')).default;
-                
-                let sp = await fetch(`https://api.siputzx.my.id/api/d/facebook?url=${encodeURIComponent(link)}`).then(v => v.json()).catch(() => null);
-                url = sp?.data?.url || sp?.data?.hd || sp?.data?.sd;
-
-                if (!url) {
-                    let rz = await fetch(`https://api.ryzendesu.vip/api/downloader/fbdl?url=${encodeURIComponent(link)}`).then(v => v.json()).catch(() => null);
-                    url = rz?.url || rz?.data?.url || rz?.result?.url_hd || rz?.result?.url_sd;
-                }
-
-                if (!url) {
-                    let fgRes = await fg.fbdl(link).catch(() => null);
-                    url = fgRes?.HD || fgRes?.SD;
-                }
-
-                if (url) {
-                    await conn.sendFile(m.chat, url, 'fb.mp4', `✅ *Auto DL: Facebook*`, m, null, fwc)
+                const { downloadCobalt } = await import('../lib/ytHelper.js')
+                let cobaltRes = await downloadCobalt(link)
+                if (cobaltRes && !cobaltRes.isPicker && fs.existsSync(cobaltRes.filePath)) {
+                    await conn.sendFile(m.chat, cobaltRes.filePath, cobaltRes.title || 'fb.mp4', `✅ *Auto DL: Facebook (Cobalt)*`, m, null, fwc)
+                    if (fs.existsSync(cobaltRes.filePath)) fs.unlinkSync(cobaltRes.filePath)
                     success = true
                 }
-            } catch (apiErr) {
-                console.error('Facebook DL API fallback failed, falling back to local tools:', apiErr.message)
+            } catch (ee) {
+                console.error('Cobalt Facebook failed, falling back to APIs...')
+            }
+
+            // Tentativa 2: APIs de terceiros
+            if (!success) {
+                let url = null;
+                try {
+                    const fetch = (await import('node-fetch')).default;
+                    
+                    let sp = await fetch(`https://api.siputzx.my.id/api/d/facebook?url=${encodeURIComponent(link)}`).then(v => v.json()).catch(() => null);
+                    url = sp?.data?.url || sp?.data?.hd || sp?.data?.sd;
+
+                    if (!url) {
+                        let rz = await fetch(`https://api.ryzendesu.vip/api/downloader/fbdl?url=${encodeURIComponent(link)}`).then(v => v.json()).catch(() => null);
+                        url = rz?.url || rz?.data?.url || rz?.result?.url_hd || rz?.result?.url_sd;
+                    }
+
+                    if (!url) {
+                        let fgRes = await fg.fbdl(link).catch(() => null);
+                        url = fgRes?.HD || fgRes?.SD;
+                    }
+
+                    if (url) {
+                        await conn.sendFile(m.chat, url, 'fb.mp4', `✅ *Auto DL: Facebook*`, m, null, fwc)
+                        success = true
+                    }
+                } catch (apiErr) {
+                    console.error('Facebook DL API fallback failed, falling back to local tools:', apiErr.message)
+                }
             }
 
             if (!success) {
@@ -283,6 +355,26 @@ export async function before(m, { conn, isOwner }) {
                 } catch(e) { }
             }
 
+            // Camada 3: Cobalt API Fallback (Evita falha global)
+            if (!success) {
+                try {
+                    const { downloadCobalt } = await import('../lib/ytHelper.js')
+                    let cobaltRes = await downloadCobalt(link)
+                    if (cobaltRes) {
+                        if (cobaltRes.isPicker) {
+                            for (let url of cobaltRes.items) {
+                                await conn.sendFile(m.chat, url, 'twitter.mp4', `✅ *Auto DL: Twitter/X (Cobalt)*`, m, null, fwc)
+                            }
+                            success = true;
+                        } else if (fs.existsSync(cobaltRes.filePath)) {
+                            await conn.sendFile(m.chat, cobaltRes.filePath, cobaltRes.title || 'twitter.mp4', `✅ *Auto DL: Twitter/X (Cobalt)*`, m, null, fwc)
+                            if (fs.existsSync(cobaltRes.filePath)) fs.unlinkSync(cobaltRes.filePath)
+                            success = true;
+                        }
+                    }
+                } catch(e) { }
+            }
+
             if (!success) throw new Error('Todas as conexões nativas do Twitter falharam.');
             m.react(done)
         } catch (e) {
@@ -344,13 +436,7 @@ export async function before(m, { conn, isOwner }) {
                     return m.reply('✳️ O arquivo superou o limite de 2GB do WhatsApp.')
                 }
 
-                // Envio via STREAM DIRETO para poupar RAM e evitar quedas em arquivos de 400MB+
-                await conn.sendMessage(m.chat, { 
-                    document: { url: filePath }, 
-                    mimetype: 'video/mp4', 
-                    fileName: `${title || 'video'}.mp4`,
-                    caption: `✅ *Auto DL: YouTube (HD)*`
-                }, { quoted: m })
+                await conn.sendFile(m.chat, filePath, `${title || 'video'}.mp4`, `✅ *Auto DL: YouTube (HD)*`, m, null, { asDocument: true })
                 
                 if (fs.existsSync(filePath)) fs.unlinkSync(filePath)
                 m.react(done)
@@ -364,6 +450,37 @@ export async function before(m, { conn, isOwner }) {
             } else {
                 m.reply(`❎ Erro ao baixar YouTube: ${e.message}`)
             }
+        }
+    }
+
+    // Pinterest (Cobalt)
+    if (!found && pinterestRegex.test(text)) {
+        let link = text.match(pinterestRegex)[0]
+        found = true
+        m.react(rwait)
+        try {
+            const { downloadCobalt } = await import('../lib/ytHelper.js')
+            let cobaltRes = await downloadCobalt(link)
+            if (cobaltRes) {
+                if (cobaltRes.isPicker) {
+                    for (let url of cobaltRes.items) {
+                        await conn.sendFile(m.chat, url, 'pinterest.png', `✅ *Auto DL: Pinterest*`, m, null, fwc)
+                    }
+                    m.react(done)
+                } else if (fs.existsSync(cobaltRes.filePath)) {
+                    await conn.sendFile(m.chat, cobaltRes.filePath, cobaltRes.title || 'pinterest.mp4', `✅ *Auto DL: Pinterest*`, m, null, fwc)
+                    if (fs.existsSync(cobaltRes.filePath)) fs.unlinkSync(cobaltRes.filePath)
+                    m.react(done)
+                } else {
+                    throw new Error('Nenhum arquivo retornado do Cobalt.')
+                }
+            } else {
+                throw new Error('API do Cobalt offline.')
+            }
+        } catch (e) {
+            console.error('AutoDL Pinterest Error:', e)
+            m.react('❌')
+            m.reply(`❎ Erro ao baixar Pinterest: ${e.message}`)
         }
     }
 
