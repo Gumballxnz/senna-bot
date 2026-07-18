@@ -151,7 +151,7 @@ global.db.data.licenses ||= {}
             status: 0,
             solopv: false,
             sologp: true,
-            restrictgp: false
+            restrictgp: true
         }
 
         if (!global.db.data.settings[botJid])
