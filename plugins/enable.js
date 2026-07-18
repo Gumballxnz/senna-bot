@@ -142,6 +142,15 @@ let handler = async (m, { conn, usedPrefix, command, args, isOwner, isAdmin, isR
       bot.sologp = isEnable
       break
       
+    case 'restrictgp':
+    case 'aluguel':
+      isAll = true
+      if (!isOwner) return global.dfail('owner', m, conn)
+      statusMsg = checkState(bot.restrictgp)
+      if (statusMsg) return m.reply(statusMsg.replace('neste grupo', 'no bot'))
+      bot.restrictgp = isEnable
+      break
+      
     default:
       if (!/[01]/.test(command)) return m.reply(`
 ≡ *LISTA DE OPÇÕES*
@@ -165,6 +174,7 @@ let handler = async (m, { conn, usedPrefix, command, args, isOwner, isAdmin, isR
 ▢ public
 ▢ solopv
 ▢ sologp
+▢ restrictgp
 └─────────────
 
 *📌 Exemplo:*

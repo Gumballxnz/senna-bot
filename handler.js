@@ -32,6 +32,23 @@ export async function handler(chatUpdate) {
         return
     //this.pushMessage(chatUpdate.messages).catch(console.error)
 
+    // Confirmação de Leitura Automática (Tique Azul)
+    if (chatUpdate.messages) {
+        for (const message of chatUpdate.messages) {
+            if (message.key && !message.key.fromMe) {
+                try {
+                    if (typeof this.readMessages === 'function') {
+                        await this.readMessages([message.key]).catch(() => {})
+                    } else if (typeof this.chatRead === 'function') {
+                        await this.chatRead(message.key.remoteJid, message.key.participant || undefined, message.key.id).catch(() => {})
+                    }
+                } catch (e) {
+                    console.error('Erro ao marcar mensagem como lida:', e)
+                }
+            }
+        }
+    }
+
     let m = chatUpdate.messages[chatUpdate.messages.length - 1]
     if (!m)
         return
@@ -45,6 +62,7 @@ global.db.data.chats ||= {}
 global.db.data.stats ||= {} 
 global.db.data.settings ||= {}
 global.db.data.statsMsg ||= {} //contador de mensaje por grupo
+global.db.data.licenses ||= {}
     
 
     
@@ -102,7 +120,8 @@ global.db.data.statsMsg ||= {} //contador de mensaje por grupo
         nsfw: false,
         rules: '',
         antiBotClone: false,
-        autodl: false
+        autodl: false,
+        expired: 0
     }
 
     if (!global.db.data.chats[m.chat])
@@ -131,7 +150,8 @@ global.db.data.statsMsg ||= {} //contador de mensaje por grupo
             restrict: false,
             status: 0,
             solopv: false,
-            sologp: false
+            sologp: true,
+            restrictgp: false
         }
 
         if (!global.db.data.settings[botJid])
@@ -164,19 +184,6 @@ if (opts.nyimak) return
 if (opts.self && !m.fromMe) return
 // Solo privado
 if (settings.solopv && isGroup) return
-// Solo grupos (con excepciones permitidas en privado)
-if (settings.sologp && !isGroup) {
-
-    const allowedPrivateCmd = [
-        'jadibot','bebot','getcode','serbot','bots',
-        'stop','support','donate','off','on','code'
-    ]
-
-    const firstWord = text.trim().split(' ')[0]
-    const command = firstWord.replace(/^[!./#?]/, '').toLowerCase()
-
-    if (!allowedPrivateCmd.includes(command)) return
-}
 // Solo estados
 if (opts.swonly && m.chat !== 'status@broadcast') return
 
@@ -205,6 +212,68 @@ const isROwner = sender === botNumber || global.owner.some(v => sender === norma
 const isOwner = isROwner || m.fromMe
 const isMods = isOwner || global.mods.map(v => normalize(v)).includes(sender)
 const isPrems = isROwner || global.prems.map(v => normalize(v)).includes(sender) || (_user?.prem === true)
+
+        // Solo grupos / Anti-PV (Bypass para o dono do bot)
+        if (settings.sologp && !isGroup && !isOwner) return
+
+        // Ativação de Licença de Aluguel (SENNA-...)
+        if (isGroup && m.text && m.text.trim().toUpperCase().startsWith('SENNA-')) {
+            let code = m.text.trim().toUpperCase()
+            global.db.data.licenses = global.db.data.licenses || {}
+            if (global.db.data.licenses[code]) {
+                let license = global.db.data.licenses[code]
+                let created = typeof license === 'object' ? license.created : Date.now()
+                let duration = typeof license === 'object' ? license.duration : license
+                
+                if (Date.now() - created > 24 * 60 * 60 * 1000) {
+                    delete global.db.data.licenses[code] // apaga licença expirada
+                    await this.reply(m.chat, `🔴 *Licença expirada!* Esta licença foi gerada há mais de 24 horas e não foi utilizada a tempo.`, m)
+                    return
+                }
+                
+                let chat = global.db.data.chats[m.chat]
+                
+                if (duration === -1) {
+                    chat.expired = -1
+                } else {
+                    let currentExpired = chat.expired && chat.expired > Date.now() ? chat.expired : Date.now()
+                    if (chat.expired === -1) {
+                        // mantém permanente
+                    } else {
+                        chat.expired = currentExpired + duration
+                    }
+                }
+                
+                delete global.db.data.licenses[code] // consome a licença (uso único)
+                
+                const formatDuration = (ms) => {
+                    if (ms === -1) return 'Permanente'
+                    let seconds = Math.floor((ms / 1000) % 60)
+                    let minutes = Math.floor((ms / (1000 * 60)) % 60)
+                    let hours = Math.floor((ms / (1000 * 60 * 60)) % 24)
+                    let days = Math.floor((ms / (1000 * 60 * 60 * 24)) % 365)
+                    let years = Math.floor(ms / (1000 * 60 * 60 * 24 * 365))
+
+                    let parts = []
+                    if (years > 0) parts.push(`${years}a`)
+                    if (days > 0) parts.push(`${days}d`)
+                    if (hours > 0) parts.push(`${hours}h`)
+                    if (minutes > 0) parts.push(`${minutes}m`)
+                    if (seconds > 0) parts.push(`${seconds}s`)
+                    return parts.join(' ') || '0s'
+                }
+                
+                let dateStr = chat.expired === -1 ? 'Nunca expira (Permanente)' : new Date(chat.expired).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })
+                let durationStr = duration === -1 ? 'Permanente' : formatDuration(duration)
+                
+                await this.reply(m.chat, `✅ *LICENÇA RESGATADA COM SUCESSO!*\n\n🔑 *Código:* ${code}\n⏳ *Duração adicionada:* ${durationStr}\n📅 *Novo vencimento:* ${dateStr} (Brasília)\n\nObrigado por apoiar! O bot agora está ativado neste grupo.`, m)
+                return
+            } else {
+                await this.reply(m.chat, `❌ *Licença inválida ou já utilizada!* Verifique se digitou corretamente.`, m)
+                return
+            }
+        }
+
 
 
         if (opts['queque'] && m.text && !(isMods || isPrems)) {
@@ -323,6 +392,21 @@ const isBotAdmin = !!bot?.admin
                 if (!isAccept)
                     continue
                 m.plugin = name
+                
+                // Verificação de Aluguel (Bloqueio de comandos para grupos expirados/não autorizados)
+                if (isGroup && !isOwner && name !== 'owner-aluguel.js') {
+                    const botJid = this.user?.jid || (this.user?.id ? this.decodeJid(this.user.id) : '')
+                    let chat = global.db.data.chats[m.chat]
+                    let botSettings = global.db.data.settings[botJid] || {}
+                    if (botSettings.restrictgp) {
+                        if (chat.expired !== -1 && (!chat.expired || chat.expired === 0 || Date.now() > chat.expired)) {
+                            let ownerNumber = Array.isArray(global.owner[0]) ? global.owner[0][0] : global.owner[0]
+                            await this.reply(m.chat, `⚠️ *MODO ALUGUEL ATIVO*\n\nEste grupo não está autorizado a utilizar os comandos do bot ou o período de aluguel expirou.\n\nPara alugar o bot para o seu grupo ou ativar uma licença, entre em contato com o proprietário: *wa.me/${ownerNumber}*`, m)
+                            return
+                        }
+                    }
+                }
+
                 if (m.chat in global.db.data.chats || m.sender in global.db.data.users) {
                     let chat = global.db.data.chats[m.chat]
                     let user = global.db.data.users[m.sender]

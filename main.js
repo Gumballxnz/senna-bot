@@ -225,6 +225,13 @@ async function connectionUpdate(update) {
     console.log('🟢 BOT CONECTADO')
     // Salvar sessão imediatamente ao conectar
     if (global.db.data) await global.db.write().catch(console.error)
+    
+    // Presença online contínua
+    try {
+      await global.conn.sendPresenceUpdate('available')
+    } catch (e) {
+      console.error('Erro ao enviar status de presença online:', e)
+    }
   }
 } //-- cu 
 
