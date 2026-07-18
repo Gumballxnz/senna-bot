@@ -57,6 +57,7 @@ let handler = async (m, { conn, args, text, usedPrefix, command, isOwner }) => {
     }
 
     if (command === 'aluguel') {
+        if (!isOwner) return global.dfail('owner', m, conn)
         if (!chat.expired || chat.expired === 0) {
             return m.reply(`ℹ️ *Status de Aluguel:* Este grupo não possui aluguel ativo (uso livre, a menos que o modo restrito esteja ativado globalmente).`)
         }
