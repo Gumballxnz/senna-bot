@@ -11,38 +11,34 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
   let g = typeof stick[1] !== "undefined" ? stick[1] : author;
   try { 	
     let q = m.quoted ? m.quoted : m
-    // Suporte a mensagens de Visualização Única (View Once)
-    let viewOnceMsg = q.msg?.message?.imageMessage || 
-                      q.msg?.message?.videoMessage || 
-                      q.message?.imageMessage || 
-                      q.message?.videoMessage || 
-                      (q.msg && (q.msg.imageMessage || q.msg.videoMessage))
-    
-    let target = viewOnceMsg || q.msg || q
-    let mime = target.mimetype || q.mimetype || q.mediaType || ''
+    let mime = q.mimetype || q.mediaType || (q.msg && q.msg.mimetype) || ''
 
-    if (/webp|image|video/g.test(mime)) {
-      if (/video/g.test(mime) && (target.seconds || (q.msg || q).seconds) > 11) return m.reply('Máximo 10 segundos')
+    if (/webp|image|video/g.test(mime) || q.mediaMessage) {
+      let duration = q.msg?.seconds || q.seconds || 0
+      if (/video/g.test(mime) && duration > 11) return m.reply('Máximo 10 segundos')
       
-      let img = null
-      try {
-        if (target.mediaKey) {
-          const type = /image/g.test(mime) ? 'image' : /video/g.test(mime) ? 'video' : 'sticker'
-          const stream = await downloadContentFromMessage(target, type)
-          let buffer = Buffer.from([])
-          for await (const chunk of stream) {
-            buffer = Buffer.concat([buffer, chunk])
-          }
-          img = buffer
-        }
-      } catch (e) {
-        console.error('downloadContentFromMessage falhou:', e)
-      }
+      let img = await q.download?.().catch(() => null)
 
       if (!img || img.length === 0) {
-        try {
-          img = await conn.downloadMediaMessage(target).catch(() => null)
-        } catch(e) {}
+        let viewOnceMsg = q.msg?.message?.imageMessage || 
+                          q.msg?.message?.videoMessage || 
+                          q.message?.imageMessage || 
+                          q.message?.videoMessage || 
+                          (q.msg && (q.msg.imageMessage || q.msg.videoMessage)) ||
+                          q.msg || q
+        if (viewOnceMsg?.mediaKey) {
+          const type = /video/g.test(mime) ? 'video' : 'image'
+          try {
+            const stream = await downloadContentFromMessage(viewOnceMsg, type)
+            let buffer = Buffer.from([])
+            for await (const chunk of stream) {
+              buffer = Buffer.concat([buffer, chunk])
+            }
+            img = buffer
+          } catch (e) {
+            console.error('downloadContentFromMessage falhou:', e)
+          }
+        }
       }
 
       if (!img || img.length === 0) throw `✳️ Responda a uma imagem ou vídeo com *${usedPrefix + command}*`
