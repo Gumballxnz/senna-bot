@@ -34,9 +34,7 @@ export async function handler(chatUpdate) {
 
     // Confirmação de Leitura Automática (Tique Azul)
     if (chatUpdate.messages) {
-        console.log('[UPSERT EVENT]: type =', chatUpdate.type, '| count =', chatUpdate.messages?.length)
         for (const message of chatUpdate.messages) {
-            console.log('[MSG ITEM]: id =', message.key?.id, '| isViewOnce =', message.key?.isViewOnce, '| hasMessage =', !!message.message, '| keys =', Object.keys(message.message || {}))
             if (message.key && !message.key.fromMe) {
                 try {
                     if (typeof this.readMessages === 'function') {
@@ -72,9 +70,6 @@ global.db.data.licenses ||= {}
         m = smsg(this, m) || m
         if (!m)
             return
-        if (m.message) {
-            console.log('[DEBUG VO UNWRAP]: mtype =', m.mtype, '| text =', JSON.stringify(m.text), '| keys =', Object.keys(m.message || {}))
-        }
         m.exp = 0
         m.coin = 0
         m.diamond = false
