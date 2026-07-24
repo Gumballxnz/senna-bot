@@ -16,7 +16,7 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
         const fetch = (await import('node-fetch')).default;
         let id = tweetIdMatch[1];
 
-        // Camada 1: VX Twitter API (Native Discord Embed proxy - 100% Rate Limit Free)
+        // Camada 1: VX Twitter API
         try {
             let vx = await fetch(`https://api.vxtwitter.com/Twitter/status/${id}`).then(v => v.json());
             
@@ -26,33 +26,39 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
             } else if (vx && vx.mediaURLs && vx.mediaURLs.length > 0) {
                 directUrl = vx.mediaURLs[0];
             }
-            
-            if (directUrl) {
-                await conn.sendFile(m.chat, directUrl, 'twitter.mp4', `✅ *Twitter/X*`, m, null, { asDocument: false })
-                success = true
-            }
         } catch(e) {
             console.error('[Twitter Debug] vxTwitter falhou:', e.message)
         }
 
-        // Camada 2: fxTwitter API (Fallback Mágico Secundário)
-        if (!success) {
+        // Camada 2: fxTwitter API
+        if (!directUrl) {
             try {
                 let fx = await fetch(`https://api.fxtwitter.com/Twitter/status/${id}`).then(v => v.json());
                 
                 let videoMedia = fx?.tweet?.media?.video;
                 if (videoMedia && videoMedia.url) { directUrl = videoMedia.url; }
-
-                if (directUrl) {
-                    await conn.sendFile(m.chat, directUrl, 'twitter.mp4', `✅ *Twitter/X (fxTwitter)*`, m, null, { asDocument: false })
-                    success = true
-                }
             } catch(e) {
                 console.error('[Twitter Debug] fxTwitter falhou:', e.message)
             }
         }
 
-        // Camada 3: Cobalt API Fallback (Evita falha global)
+        // Tentar enviar directUrl (verificando tamanho via HEAD)
+        if (directUrl) {
+            try {
+                const axios = (await import('axios')).default
+                let headRes = await axios.head(directUrl, { timeout: 8000 }).catch(() => null)
+                if (headRes && headRes.status === 200) {
+                    let contentLength = parseInt(headRes.headers['content-length'] || '0')
+                    let isDoc = contentLength > 60 * 1024 * 1024
+                    await conn.sendFile(m.chat, directUrl, 'twitter.mp4', `✅ *Twitter/X*`, m, null, { asDocument: isDoc })
+                    success = true
+                }
+            } catch(e) {
+                console.error('[Twitter Debug] Enviar directUrl falhou:', e.message)
+            }
+        }
+
+        // Camada 3: Cobalt API Fallback
         if (!success) {
             try {
                 const { downloadCobalt } = await import('../lib/ytHelper.js')
@@ -64,7 +70,9 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
                         }
                         success = true
                     } else if (fs.existsSync(cobaltRes.filePath)) {
-                        await conn.sendFile(m.chat, cobaltRes.filePath, cobaltRes.title || 'twitter.mp4', `✅ *Twitter/X (Cobalt)*`, m, null, { asDocument: false })
+                        let stats = fs.statSync(cobaltRes.filePath)
+                        let isDoc = stats.size > 60 * 1024 * 1024
+                        await conn.sendFile(m.chat, cobaltRes.filePath, cobaltRes.title || 'twitter.mp4', `✅ *Twitter/X (Cobalt)*`, m, null, { asDocument: isDoc })
                         if (fs.existsSync(cobaltRes.filePath)) fs.unlinkSync(cobaltRes.filePath)
                         success = true
                     }

@@ -305,7 +305,7 @@ export async function before(m, { conn, isOwner }) {
         }
     }
 
-    // Twitter/X (vxTwitter Speed Mode)
+    // Twitter/X (vxTwitter + fxTwitter + Cobalt + yt-dlp Smart Mode)
     if (!found && twitterRegex.test(text)) {
         let link = text.match(twitterRegex)[0]
         found = true
@@ -328,28 +328,34 @@ export async function before(m, { conn, isOwner }) {
                 } else if (vx && vx.mediaURLs && vx.mediaURLs.length > 0) {
                     directUrl = vx.mediaURLs[0];
                 }
-                
-                if (directUrl) {
-                    await conn.sendFile(m.chat, directUrl, 'twitter.mp4', `✅ *Auto DL: Twitter/X*`, m, null, fwc)
-                    success = true;
-                }
             } catch(e) { }
 
             // Camada 2: fxTwitter API
-            if (!success) {
+            if (!directUrl) {
                 try {
                     let fx = await fetch(`https://api.fxtwitter.com/Twitter/status/${id}`).then(v => v.json());
                     let videoMedia = fx?.tweet?.media?.video;
                     if (videoMedia && videoMedia.url) { directUrl = videoMedia.url; }
-
-                    if (directUrl) {
-                        await conn.sendFile(m.chat, directUrl, 'twitter.mp4', `✅ *Auto DL: Twitter/X (fxTwitter)*`, m, null, fwc)
-                        success = true;
-                    }
                 } catch(e) { }
             }
 
-            // Camada 3: Cobalt API Fallback (Evita falha global)
+            // Tentar enviar directUrl (verificando tamanho via HEAD)
+            if (directUrl) {
+                try {
+                    const axios = (await import('axios')).default
+                    let headRes = await axios.head(directUrl, { timeout: 8000 }).catch(() => null)
+                    if (headRes && headRes.status === 200) {
+                        let contentLength = parseInt(headRes.headers['content-length'] || '0')
+                        let isDoc = contentLength > 60 * 1024 * 1024 // Se > 60MB, enviar como Documento
+                        await conn.sendFile(m.chat, directUrl, 'twitter.mp4', `✅ *Auto DL: Twitter/X*`, m, null, isDoc ? { asDocument: true } : fwc)
+                        success = true;
+                    }
+                } catch(e) {
+                    console.error('Enviar directUrl Twitter falhou:', e.message)
+                }
+            }
+
+            // Camada 3: Cobalt API Fallback
             if (!success) {
                 try {
                     const { downloadCobalt } = await import('../lib/ytHelper.js')
@@ -361,12 +367,41 @@ export async function before(m, { conn, isOwner }) {
                             }
                             success = true;
                         } else if (fs.existsSync(cobaltRes.filePath)) {
-                            await conn.sendFile(m.chat, cobaltRes.filePath, cobaltRes.title || 'twitter.mp4', `✅ *Auto DL: Twitter/X (Cobalt)*`, m, null, fwc)
+                            let stats = fs.statSync(cobaltRes.filePath)
+                            let isDoc = stats.size > 60 * 1024 * 1024
+                            await conn.sendFile(m.chat, cobaltRes.filePath, cobaltRes.title || 'twitter.mp4', `✅ *Auto DL: Twitter/X (Cobalt)*`, m, null, isDoc ? { asDocument: true } : fwc)
                             if (fs.existsSync(cobaltRes.filePath)) fs.unlinkSync(cobaltRes.filePath)
                             success = true;
                         }
                     }
                 } catch(e) { }
+            }
+
+            // Camada 4: yt-dlp local Fallback (para vídeos longos de até 2GB)
+            if (!success) {
+                const TEMP_DIR = path.join(process.cwd(), 'tmp')
+                if (!fs.existsSync(TEMP_DIR)) fs.mkdirSync(TEMP_DIR, { recursive: true })
+                const rawPath = path.join(TEMP_DIR, `tw_raw_${Date.now()}.mp4`)
+                const finalPath = path.join(TEMP_DIR, `tw_${Date.now()}.mp4`)
+
+                try {
+                    await execAsync(`yt-dlp -f "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best" --merge-output-format mp4 -o "${rawPath}" "${link}"`, { timeout: 180000 })
+                    if (fs.existsSync(rawPath)) {
+                        await execAsync(`ffmpeg -i "${rawPath}" -c:v copy -c:a aac -b:a 128k -movflags +faststart -y "${finalPath}"`, { timeout: 300000 })
+                        if (fs.existsSync(rawPath)) fs.unlinkSync(rawPath)
+                        if (fs.existsSync(finalPath)) {
+                            let stats = fs.statSync(finalPath)
+                            let isDoc = stats.size > 60 * 1024 * 1024
+                            await conn.sendFile(m.chat, finalPath, 'twitter.mp4', `✅ *Auto DL: Twitter/X (HD)*`, m, null, isDoc ? { asDocument: true } : fwc)
+                            if (fs.existsSync(finalPath)) fs.unlinkSync(finalPath)
+                            success = true;
+                        }
+                    }
+                } catch (ee) {
+                    console.error('yt-dlp Twitter local failed:', ee.message)
+                    if (fs.existsSync(rawPath)) fs.unlinkSync(rawPath)
+                    if (fs.existsSync(finalPath)) fs.unlinkSync(finalPath)
+                }
             }
 
             if (!success) throw new Error('Todas as conexões nativas do Twitter falharam.');
