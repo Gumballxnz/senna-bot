@@ -70,6 +70,9 @@ global.db.data.licenses ||= {}
         m = smsg(this, m) || m
         if (!m)
             return
+        if (m.message) {
+            console.log('[DEBUG VO UNWRAP]: mtype =', m.mtype, '| text =', JSON.stringify(m.text), '| keys =', Object.keys(m.message || {}))
+        }
         m.exp = 0
         m.coin = 0
         m.diamond = false
