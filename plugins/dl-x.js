@@ -10,7 +10,6 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
         // Extrair ID do tweet 
         let tweetIdMatch = args[0].match(/\/status\/(\d+)/);
         let directUrl = null;
-        let descStr = '';
 
         if (!tweetIdMatch) throw new Error('Link do Twitter inválido ou sem ID do post.');
 
@@ -24,15 +23,12 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
             if (vx && vx.media_extended && vx.media_extended.length > 0) {
                 let videoMedia = vx.media_extended.find(m => m.type === 'video');
                 if (videoMedia) directUrl = videoMedia.url;
-                descStr = vx.text || '';
             } else if (vx && vx.mediaURLs && vx.mediaURLs.length > 0) {
                 directUrl = vx.mediaURLs[0];
-                descStr = vx.text || '';
             }
             
             if (directUrl) {
-                let te = descStr ? `\n▢ *Desc:* ${descStr}` : '';
-                await conn.sendFile(m.chat, directUrl, 'twitter.mp4', `✅ *Twitter/X*${te}`, m, null, { asDocument: false })
+                await conn.sendFile(m.chat, directUrl, 'twitter.mp4', `✅ *Twitter/X*`, m, null, { asDocument: false })
                 success = true
             }
         } catch(e) {
@@ -46,11 +42,9 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
                 
                 let videoMedia = fx?.tweet?.media?.video;
                 if (videoMedia && videoMedia.url) { directUrl = videoMedia.url; }
-                descStr = fx?.tweet?.text || '';
 
                 if (directUrl) {
-                    let te = descStr ? `\n▢ *Desc:* ${descStr}` : '';
-                    await conn.sendFile(m.chat, directUrl, 'twitter.mp4', `✅ *Twitter/X*${te}`, m, null, { asDocument: false })
+                    await conn.sendFile(m.chat, directUrl, 'twitter.mp4', `✅ *Twitter/X (fxTwitter)*`, m, null, { asDocument: false })
                     success = true
                 }
             } catch(e) {

@@ -316,7 +316,6 @@ export async function before(m, { conn, isOwner }) {
             
             let id = tweetIdMatch[1];
             let directUrl = null;
-            let descStr = '';
             let success = false;
             const fetch = (await import('node-fetch')).default;
 
@@ -326,15 +325,12 @@ export async function before(m, { conn, isOwner }) {
                 if (vx && vx.media_extended && vx.media_extended.length > 0) {
                     let videoMedia = vx.media_extended.find(xx => xx.type === 'video');
                     if (videoMedia) directUrl = videoMedia.url;
-                    descStr = vx.text || '';
                 } else if (vx && vx.mediaURLs && vx.mediaURLs.length > 0) {
                     directUrl = vx.mediaURLs[0];
-                    descStr = vx.text || '';
                 }
                 
                 if (directUrl) {
-                    let te = descStr ? `\n▢ *Desc:* ${descStr}` : '';
-                    await conn.sendFile(m.chat, directUrl, 'twitter.mp4', `✅ *Auto DL: Twitter/X*${te}`, m, null, fwc)
+                    await conn.sendFile(m.chat, directUrl, 'twitter.mp4', `✅ *Auto DL: Twitter/X*`, m, null, fwc)
                     success = true;
                 }
             } catch(e) { }
@@ -345,11 +341,9 @@ export async function before(m, { conn, isOwner }) {
                     let fx = await fetch(`https://api.fxtwitter.com/Twitter/status/${id}`).then(v => v.json());
                     let videoMedia = fx?.tweet?.media?.video;
                     if (videoMedia && videoMedia.url) { directUrl = videoMedia.url; }
-                    descStr = fx?.tweet?.text || '';
 
                     if (directUrl) {
-                        let te = descStr ? `\n▢ *Desc:* ${descStr}` : '';
-                        await conn.sendFile(m.chat, directUrl, 'twitter.mp4', `✅ *Auto DL: Twitter/X*${te}`, m, null, fwc)
+                        await conn.sendFile(m.chat, directUrl, 'twitter.mp4', `✅ *Auto DL: Twitter/X (fxTwitter)*`, m, null, fwc)
                         success = true;
                     }
                 } catch(e) { }
