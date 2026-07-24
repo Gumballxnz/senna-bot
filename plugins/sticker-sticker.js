@@ -2,6 +2,7 @@ import { sticker } from '../lib/sticker.js'
 import uploadFile from '../lib/uploadFile.js'
 import uploadImage from '../lib/uploadImage.js'
 import { webp2png } from '../lib/webp2mp4.js'
+import { downloadContentFromMessage } from '@whiskeysockets/baileys'
 
 let handler = async (m, { conn, args, usedPrefix, command }) => {
   let stiker = false
@@ -11,14 +12,41 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
   try { 	
     let q = m.quoted ? m.quoted : m
     // Suporte a mensagens de Visualização Única (View Once)
-    let viewOnceMsg = q.msg?.message?.imageMessage || q.msg?.message?.videoMessage || q.message?.imageMessage || q.message?.videoMessage || (q.msg && (q.msg.imageMessage || q.msg.videoMessage))
+    let viewOnceMsg = q.msg?.message?.imageMessage || 
+                      q.msg?.message?.videoMessage || 
+                      q.message?.imageMessage || 
+                      q.message?.videoMessage || 
+                      (q.msg && (q.msg.imageMessage || q.msg.videoMessage))
+    
     let target = viewOnceMsg || q.msg || q
     let mime = target.mimetype || q.mimetype || q.mediaType || ''
 
     if (/webp|image|video/g.test(mime)) {
       if (/video/g.test(mime) && (target.seconds || (q.msg || q).seconds) > 11) return m.reply('Máximo 10 segundos')
-      let img = await q.download?.() || await conn.downloadMediaMessage(q)
-      if (!img) throw `✳️ Responda a uma imagem ou vídeo com *${usedPrefix + command}*`
+      
+      let img = null
+      try {
+        if (target.mediaKey) {
+          const type = /image/g.test(mime) ? 'image' : /video/g.test(mime) ? 'video' : 'sticker'
+          const stream = await downloadContentFromMessage(target, type)
+          let buffer = Buffer.from([])
+          for await (const chunk of stream) {
+            buffer = Buffer.concat([buffer, chunk])
+          }
+          img = buffer
+        }
+      } catch (e) {
+        console.error('downloadContentFromMessage falhou:', e)
+      }
+
+      if (!img || img.length === 0) {
+        try {
+          img = await conn.downloadMediaMessage(target).catch(() => null)
+        } catch(e) {}
+      }
+
+      if (!img || img.length === 0) throw `✳️ Responda a uma imagem ou vídeo com *${usedPrefix + command}*`
+
       let out
       try {
         stiker = await sticker(img, false, f, g)
