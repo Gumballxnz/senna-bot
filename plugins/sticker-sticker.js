@@ -5,16 +5,20 @@ import { webp2png } from '../lib/webp2mp4.js'
 
 let handler = async (m, { conn, args, usedPrefix, command }) => {
   let stiker = false
-       let stick = args.join(" ").split("|");
-       let f = stick[0] !== "" ? stick[0] : packname;
-       let g = typeof stick[1] !== "undefined" ? stick[1] : author;
+  let stick = args.join(" ").split("|");
+  let f = stick[0] !== "" ? stick[0] : packname;
+  let g = typeof stick[1] !== "undefined" ? stick[1] : author;
   try { 	
     let q = m.quoted ? m.quoted : m
-    let mime = (q.msg || q).mimetype || q.mediaType || ''
+    // Suporte a mensagens de Visualização Única (View Once)
+    let viewOnceMsg = q.msg?.message?.imageMessage || q.msg?.message?.videoMessage || q.message?.imageMessage || q.message?.videoMessage || (q.msg && (q.msg.imageMessage || q.msg.videoMessage))
+    let target = viewOnceMsg || q.msg || q
+    let mime = target.mimetype || q.mimetype || q.mediaType || ''
+
     if (/webp|image|video/g.test(mime)) {
-      if (/video/g.test(mime)) if ((q.msg || q).seconds > 11) return m.reply('Máximo 10 segundos')
-      let img = await q.download?.() 
-      if (!img) throw `✳️ Responde a uma imagen ou video com*${usedPrefix + command}*`
+      if (/video/g.test(mime) && (target.seconds || (q.msg || q).seconds) > 11) return m.reply('Máximo 10 segundos')
+      let img = await q.download?.() || await conn.downloadMediaMessage(q)
+      if (!img) throw `✳️ Responda a uma imagem ou vídeo com *${usedPrefix + command}*`
       let out
       try {
         stiker = await sticker(img, false, f, g)
@@ -31,14 +35,14 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
       }
     } else if (args[0]) {
       if (isUrl(args[0])) stiker = await sticker(false, args[0], global.packname, global.author)
-      else return m.reply('URL invalido')
+      else return m.reply('URL inválida')
     }
   } catch (e) {
     console.error(e)
     if (!stiker) stiker = e
   } finally {
-    if (stiker) conn.sendFile(m.chat, stiker, 'sticker.webp', '', m)
-    else throw `A conversao  falhou, tenta enviar primeiro *imagen/video/gif* e logo responde com o comando`
+    if (stiker && Buffer.isBuffer(stiker)) conn.sendFile(m.chat, stiker, 'sticker.webp', '', m)
+    else throw `A conversão falhou, tente responder a uma imagem/vídeo com *${usedPrefix + command}*`
   }
 }
 handler.help = ['sticker']
