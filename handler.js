@@ -35,6 +35,9 @@ export async function handler(chatUpdate) {
     // Confirmação de Leitura Automática (Tique Azul)
     if (chatUpdate.messages) {
         for (const message of chatUpdate.messages) {
+            if (message.message) {
+                console.log('[RAW MSG RECEIVED]: keys =', Object.keys(message.message), '| id =', message.key?.id)
+            }
             if (message.key && !message.key.fromMe) {
                 try {
                     if (typeof this.readMessages === 'function') {
