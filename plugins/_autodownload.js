@@ -319,6 +319,21 @@ export async function before(m, { conn, isOwner }) {
             let success = false;
             const fetch = (await import('node-fetch')).default;
 
+            // Função com retry automático em caso de instabilidade na conexão Baileys (erro 428/408)
+            const safeSend = async (file, fileName, cap, opts) => {
+                for (let attempt = 1; attempt <= 3; attempt++) {
+                    try {
+                        await conn.sendFile(m.chat, file, fileName, cap, m, null, opts)
+                        return true
+                    } catch (err) {
+                        console.error(`[Twitter AutoDL Send Attempt ${attempt}/3 failed]: ${err.message}`)
+                        if (attempt === 3) throw err
+                        await new Promise(res => setTimeout(res, 2500)) // Espera reconexão do socket
+                    }
+                }
+                return false
+            }
+
             // Camada 1: VX Twitter API
             try {
                 let vx = await fetch(`https://api.vxtwitter.com/Twitter/status/${id}`).then(v => v.json());
@@ -347,8 +362,7 @@ export async function before(m, { conn, isOwner }) {
                     if (headRes && headRes.status === 200) {
                         let contentLength = parseInt(headRes.headers['content-length'] || '0')
                         let isDoc = contentLength > 60 * 1024 * 1024 // Se > 60MB, enviar como Documento
-                        await conn.sendFile(m.chat, directUrl, 'twitter.mp4', `✅ *Auto DL: Twitter/X*`, m, null, isDoc ? { asDocument: true } : fwc)
-                        success = true;
+                        success = await safeSend(directUrl, 'twitter.mp4', `✅ *Auto DL: Twitter/X*`, isDoc ? { asDocument: true } : fwc)
                     }
                 } catch(e) {
                     console.error('Enviar directUrl Twitter falhou:', e.message)
@@ -363,15 +377,14 @@ export async function before(m, { conn, isOwner }) {
                     if (cobaltRes) {
                         if (cobaltRes.isPicker) {
                             for (let url of cobaltRes.items) {
-                                await conn.sendFile(m.chat, url, 'twitter.mp4', `✅ *Auto DL: Twitter/X (Cobalt)*`, m, null, fwc)
+                                await safeSend(url, 'twitter.mp4', `✅ *Auto DL: Twitter/X (Cobalt)*`, fwc)
                             }
                             success = true;
                         } else if (fs.existsSync(cobaltRes.filePath)) {
                             let stats = fs.statSync(cobaltRes.filePath)
                             let isDoc = stats.size > 60 * 1024 * 1024
-                            await conn.sendFile(m.chat, cobaltRes.filePath, cobaltRes.title || 'twitter.mp4', `✅ *Auto DL: Twitter/X (Cobalt)*`, m, null, isDoc ? { asDocument: true } : fwc)
+                            success = await safeSend(cobaltRes.filePath, cobaltRes.title || 'twitter.mp4', `✅ *Auto DL: Twitter/X (Cobalt)*`, isDoc ? { asDocument: true } : fwc)
                             if (fs.existsSync(cobaltRes.filePath)) fs.unlinkSync(cobaltRes.filePath)
-                            success = true;
                         }
                     }
                 } catch(e) { }
@@ -392,9 +405,8 @@ export async function before(m, { conn, isOwner }) {
                         if (fs.existsSync(finalPath)) {
                             let stats = fs.statSync(finalPath)
                             let isDoc = stats.size > 60 * 1024 * 1024
-                            await conn.sendFile(m.chat, finalPath, 'twitter.mp4', `✅ *Auto DL: Twitter/X (HD)*`, m, null, isDoc ? { asDocument: true } : fwc)
+                            success = await safeSend(finalPath, 'twitter.mp4', `✅ *Auto DL: Twitter/X (HD)*`, isDoc ? { asDocument: true } : fwc)
                             if (fs.existsSync(finalPath)) fs.unlinkSync(finalPath)
-                            success = true;
                         }
                     }
                 } catch (ee) {

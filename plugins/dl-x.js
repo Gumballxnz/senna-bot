@@ -16,6 +16,21 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
         const fetch = (await import('node-fetch')).default;
         let id = tweetIdMatch[1];
 
+        // Função com retry automático em caso de instabilidade na conexão Baileys (erro 428/408)
+        const safeSend = async (file, fileName, cap, opts) => {
+            for (let attempt = 1; attempt <= 3; attempt++) {
+                try {
+                    await conn.sendFile(m.chat, file, fileName, cap, m, null, opts)
+                    return true
+                } catch (err) {
+                    console.error(`[Twitter DL Send Attempt ${attempt}/3 failed]: ${err.message}`)
+                    if (attempt === 3) throw err
+                    await new Promise(res => setTimeout(res, 2500))
+                }
+            }
+            return false
+        }
+
         // Camada 1: VX Twitter API
         try {
             let vx = await fetch(`https://api.vxtwitter.com/Twitter/status/${id}`).then(v => v.json());
@@ -50,8 +65,7 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
                 if (headRes && headRes.status === 200) {
                     let contentLength = parseInt(headRes.headers['content-length'] || '0')
                     let isDoc = contentLength > 60 * 1024 * 1024
-                    await conn.sendFile(m.chat, directUrl, 'twitter.mp4', `✅ *Twitter/X*`, m, null, { asDocument: isDoc })
-                    success = true
+                    success = await safeSend(directUrl, 'twitter.mp4', `✅ *Twitter/X*`, { asDocument: isDoc })
                 }
             } catch(e) {
                 console.error('[Twitter Debug] Enviar directUrl falhou:', e.message)
@@ -66,15 +80,14 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
                 if (cobaltRes) {
                     if (cobaltRes.isPicker) {
                         for (let url of cobaltRes.items) {
-                            await conn.sendFile(m.chat, url, 'twitter.mp4', `✅ *Twitter/X (Cobalt)*`, m, null, { asDocument: false })
+                            await safeSend(url, 'twitter.mp4', `✅ *Twitter/X (Cobalt)*`, { asDocument: false })
                         }
                         success = true
                     } else if (fs.existsSync(cobaltRes.filePath)) {
                         let stats = fs.statSync(cobaltRes.filePath)
                         let isDoc = stats.size > 60 * 1024 * 1024
-                        await conn.sendFile(m.chat, cobaltRes.filePath, cobaltRes.title || 'twitter.mp4', `✅ *Twitter/X (Cobalt)*`, m, null, { asDocument: isDoc })
+                        success = await safeSend(cobaltRes.filePath, cobaltRes.title || 'twitter.mp4', `✅ *Twitter/X (Cobalt)*`, { asDocument: isDoc })
                         if (fs.existsSync(cobaltRes.filePath)) fs.unlinkSync(cobaltRes.filePath)
-                        success = true
                     }
                 }
             } catch (e) {
