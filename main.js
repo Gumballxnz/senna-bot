@@ -203,7 +203,27 @@ async function connectionUpdate(update) {
 
   if (connection === 'close') {
     const statusCode = lastDisconnect?.error?.output?.statusCode
-    const shouldReconnect = statusCode !== DisconnectReason.loggedOut
+    const isBanned = statusCode === 403
+    const isLoggedOut = statusCode === 401 || statusCode === DisconnectReason.loggedOut
+
+    if (isBanned) {
+      console.log('❌------------------------------------------------------------❌')
+      console.log('❌ O NÚMERO ASSOCIADO AO BOT FOI BANIDO DO WHATSAPP!')
+      console.log('❌ Reconexão automática desativada para evitar sobrecarga no servidor.')
+      console.log('❌ Por favor, altere o número ou verifique a situação da conta.')
+      console.log('❌------------------------------------------------------------❌')
+      
+      // Limpa os listeners e desativa a reconexão para manter o processo inativo
+      try {
+        global.conn.ws.close()
+      } catch (e) {}
+      try {
+        global.conn.ev.removeAllListeners()
+      } catch (e) {}
+      return
+    }
+
+    const shouldReconnect = !isLoggedOut
 
     if (shouldReconnect) {
       console.log(`♻ Reconectando... (código: ${statusCode || 'desconhecido'})`)
