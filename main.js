@@ -204,13 +204,18 @@ async function connectionUpdate(update) {
   if (connection === 'close') {
     const statusCode = lastDisconnect?.error?.output?.statusCode
     const isBanned = statusCode === 403
+    const isReplaced = statusCode === 405
     const isLoggedOut = statusCode === 401 || statusCode === DisconnectReason.loggedOut
+    const isBadSession = statusCode === 402
 
-    if (isBanned) {
+    if (isBanned || isReplaced) {
       console.log('❌------------------------------------------------------------❌')
-      console.log('❌ O NÚMERO ASSOCIADO AO BOT FOI BANIDO DO WHATSAPP!')
+      if (isBanned) {
+        console.log('❌ O NÚMERO ASSOCIADO AO BOT FOI BANIDO DO WHATSAPP!')
+      } else {
+        console.log('❌ CONEXÃO SUBSTITUÍDA! OUTRO APARELHO SE CONECTOU A ESTA CONTA.')
+      }
       console.log('❌ Reconexão automática desativada para evitar sobrecarga no servidor.')
-      console.log('❌ Por favor, altere o número ou verifique a situação da conta.')
       console.log('❌------------------------------------------------------------❌')
       
       // Limpa os listeners e desativa a reconexão para manter o processo inativo
@@ -223,7 +228,7 @@ async function connectionUpdate(update) {
       return
     }
 
-    const shouldReconnect = !isLoggedOut
+    const shouldReconnect = !isLoggedOut && !isBadSession
 
     if (shouldReconnect) {
       console.log(`♻ Reconectando... (código: ${statusCode || 'desconhecido'})`)
@@ -231,7 +236,7 @@ async function connectionUpdate(update) {
       await new Promise(r => setTimeout(r, 3000))
       global.reloadHandler(true)
     } else {
-      console.log('❌ Sessão expirada! Limpando sessão antiga e reiniciando...')
+      console.log('❌ Sessão expirada ou corrompida! Limpando sessão antiga e reiniciando...')
       // Limpar sessão corrompida automaticamente
       const { rmSync } = await import('fs')
       try { rmSync('./sessions', { recursive: true, force: true }) } catch {}
