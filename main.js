@@ -33,7 +33,8 @@ const {
     DisconnectReason,
     fetchLatestBaileysVersion,
     makeCacheableSignalKeyStore, 
-    jidNormalizedUser
+    jidNormalizedUser,
+    Browsers
    } = await import('@whiskeysockets/baileys')
 import moment from 'moment-timezone'
 import NodeCache from 'node-cache'
@@ -106,7 +107,7 @@ const {version} = await fetchLatestBaileysVersion()
 const connectionOptions = {
     logger: pino({ level: 'silent' }),
     version,
-    browser: ['Mac OS', 'Chrome', '121.0.6167.159'],
+    browser: Browsers.ubuntu('Chrome'),
     auth: {
         creds: state.creds,
         keys: makeCacheableSignalKeyStore(
