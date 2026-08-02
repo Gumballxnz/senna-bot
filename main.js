@@ -194,6 +194,10 @@ async function connectionUpdate(update) {
   const { connection, lastDisconnect, qr } = update
 
   if (qr) {
+    try {
+      await qrcode.toFile('./qr.png', qr)
+      console.log('📸 QR Code salvo em ./qr.png')
+    } catch (e) {}
     qrcode.toString(qr, { type: 'terminal', small: true }, function (err, str) {
       if (!err) {
         console.log('\n' + str)
