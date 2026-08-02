@@ -136,20 +136,8 @@ conn.store = store
 conn.ev.on('creds.update', saveCreds)
 
 //-- 
-// O método de emparelhamento por número foi substituído pelo scanner de QR Code.
+// Método de emparelhamento automático desativado para evitar requisições indesejadas e bloqueios da Meta.
 //--
-if (!state.creds.registered) {
-    let phoneNumber = "258871828596"
-    setTimeout(async () => {
-        try {
-            let code = await conn.requestPairingCode(phoneNumber)
-            code = code?.match(/.{1,4}/g)?.join('-') || code
-            console.log(chalk.green('\n📱 CÓDIGO DE PAREAMENTO: ' + chalk.bold(code) + '\n'))
-        } catch (e) {
-            console.error('Erro ao gerar código de pareamento: ', e)
-        }
-    }, 10000)
-}
 
 conn.isInit = false
 
