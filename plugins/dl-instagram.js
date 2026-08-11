@@ -64,14 +64,18 @@ let handler = async (m, { conn, text, args, usedPrefix, command }) => {
     }
   }
 
-  // Motor 2: yt-dlp local (Alta Qualidade como fallback)
+  // Motor 3: yt-dlp local (Alta Qualidade como fallback)
   const TEMP_DIR = path.join(process.cwd(), 'tmp')
   if (!fs.existsSync(TEMP_DIR)) fs.mkdirSync(TEMP_DIR, { recursive: true })
   const rawPath = path.join(TEMP_DIR, `ig_raw_${Date.now()}.mp4`)
   const finalPath = path.join(TEMP_DIR, `ig_${Date.now()}.mp4`)
 
+  let cookiesFlag = ''
+  const cookiesPath = path.join(process.cwd(), 'cookies.txt')
+  if (fs.existsSync(cookiesPath)) cookiesFlag = `--cookies "${cookiesPath}"`
+
   try {
-    await execAsync(`yt-dlp -f "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best" --merge-output-format mp4 -o "${rawPath}" "${args[0]}"`, { timeout: 120000 })
+    await execAsync(`yt-dlp ${cookiesFlag} -f "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best" --merge-output-format mp4 -o "${rawPath}" "${args[0]}"`, { timeout: 120000 })
     if (fs.existsSync(rawPath)) {
       await execAsync(`ffmpeg -i "${rawPath}" -c:v copy -c:a aac -b:a 128k -movflags +faststart -y "${finalPath}"`, { timeout: 180000 })
       if (fs.existsSync(rawPath)) fs.unlinkSync(rawPath)

@@ -159,7 +159,11 @@ export async function before(m, { conn, isOwner }) {
                 const finalPath = path.join(TEMP_DIR, `ig_${Date.now()}.mp4`)
 
                 try {
-                    await execAsync(`yt-dlp -f "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best" --merge-output-format mp4 -o "${rawPath}" "${link}"`, { timeout: 120000 })
+                    let cookiesFlag = ''
+                    const cookiesPath = path.join(process.cwd(), 'cookies.txt')
+                    if (fs.existsSync(cookiesPath)) cookiesFlag = `--cookies "${cookiesPath}"`
+
+                    await execAsync(`yt-dlp ${cookiesFlag} -f "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best" --merge-output-format mp4 -o "${rawPath}" "${link}"`, { timeout: 120000 })
                     if (fs.existsSync(rawPath)) {
                         await execAsync(`ffmpeg -i "${rawPath}" -c:v copy -c:a aac -b:a 128k -movflags +faststart -y "${finalPath}"`, { timeout: 180000 })
                         if (fs.existsSync(rawPath)) fs.unlinkSync(rawPath)
