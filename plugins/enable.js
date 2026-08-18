@@ -61,6 +61,7 @@ let handler = async (m, { conn, usedPrefix, command, args, isOwner, isAdmin, isR
       statusMsg = checkState(!global.opts['self'])
       if (statusMsg) return m.reply(statusMsg.replace('neste grupo', 'no bot'))
       global.opts['self'] = !isEnable
+      bot.self = !isEnable
       break
 
     case 'antilink':
