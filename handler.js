@@ -164,6 +164,10 @@ global.db.data.licenses ||= {}
                 settings[key] = settingDefaults[key]
             }
         }
+        if (settings.self) {
+            global.opts['self'] = true
+            global.opts.self = true
+        }
     }
 
 } catch (e) {
@@ -180,8 +184,6 @@ m.text = text
 
 // Modo escucha (no responde nada)
 if (opts.nyimak) return
-// Modo self (solo responde a sí mismo)
-if (opts.self && !m.fromMe) return
 // Solo privado
 if (settings.solopv && isGroup) return
 // Solo estados
@@ -214,7 +216,7 @@ const isMods = isOwner || global.mods.map(v => normalize(v)).includes(sender)
 const isPrems = isROwner || global.prems.map(v => normalize(v)).includes(sender) || (_user?.prem === true)
 
         // Modo Self / Privado (Bot desligado para o público - 100% silencioso)
-        if ((opts['self'] || settings.self) && !isOwner && !isROwner) return
+        if ((opts['self'] || opts.self || settings.self) && !isOwner && !isROwner) return
 
         // Solo grupos / Anti-PV (Bypass para o dono do bot)
         if (settings.sologp && !isGroup && !isOwner) return

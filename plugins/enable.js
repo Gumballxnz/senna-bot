@@ -4,8 +4,17 @@ let handler = async (m, { conn, usedPrefix, command, args, isOwner, isAdmin, isR
   let isEnable = /true|enable|(turn)?on|1/i.test(command)
   let chat = global.db.data.chats[m.chat]
   let user = global.db.data.users[m.sender]
-  let bot = global.db.data.settings[conn.user.jid] || {}
+  const botJid = conn.user?.jid || (conn.user?.id ? conn.decodeJid(conn.user.id) : '')
+  if (botJid && !global.db.data.settings[botJid]) global.db.data.settings[botJid] = {}
+  let bot = botJid ? global.db.data.settings[botJid] : {}
   let type = (args[0] || '').toLowerCase()
+
+  // Suporte a comandos diretos como .public on/off, .self on/off, .bot on/off
+  if (/^(public|publico|self|bot)$/i.test(command)) {
+    type = 'public'
+    isEnable = /true|enable|(turn)?on|1/i.test(args[0] || '')
+  }
+
   let isAll = false, isUser = false
   
   // Função para verificar se já está no estado desejado
@@ -56,11 +65,14 @@ let handler = async (m, { conn, usedPrefix, command, args, isOwner, isAdmin, isR
 
     case 'public':
     case 'publico':
+    case 'self':
       isAll = true
-      if (!isROwner) return global.dfail('rowner', m, conn)
-      statusMsg = checkState(!global.opts['self'])
+      if (!isROwner && !isOwner) return global.dfail('rowner', m, conn)
+      const currentSelf = global.opts['self'] || bot.self || false
+      statusMsg = checkState(!currentSelf)
       if (statusMsg) return m.reply(statusMsg.replace('neste grupo', 'no bot'))
       global.opts['self'] = !isEnable
+      global.opts.self = !isEnable
       bot.self = !isEnable
       break
 
@@ -192,6 +204,6 @@ let handler = async (m, { conn, usedPrefix, command, args, isOwner, isAdmin, isR
 }
 handler.help = ['on', 'off'].map(v => v + ' <opção>')
 handler.tags = ['nable']
-handler.command = /^((en|dis)able|(tru|fals)e|(turn)?o(n|ff)|[01])$/i
+handler.command = /^((en|dis)able|(tru|fals)e|(turn)?o(n|ff)|[01]|public|publico|self|bot)$/i
 
 export default handler
