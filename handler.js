@@ -210,7 +210,10 @@ const botNumber = this.user?.id?.replace(/:[0-9]+/g, '') || ''
 const sender = ((await conn.getJid(m.sender)) || m.sender).split(':')[0] + '@s.whatsapp.net'
 const normalize = v => v.replace(/[^0-9]/g, '') + '@s.whatsapp.net'
 
-const isROwner = sender === botNumber || global.owner.some(v => sender === normalize(Array.isArray(v) ? v[0] : v))
+const isROwner = sender === botNumber || global.owner.some(v => {
+    let raw = Array.isArray(v) ? v[0] : v
+    return sender === normalize(raw) || (m.sender && m.sender.includes(raw)) || (sender && sender.includes(raw))
+})
 const isOwner = isROwner || m.fromMe
 const isMods = isOwner || global.mods.map(v => normalize(v)).includes(sender)
 const isPrems = isROwner || global.prems.map(v => normalize(v)).includes(sender) || (_user?.prem === true)
