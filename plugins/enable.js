@@ -74,6 +74,9 @@ let handler = async (m, { conn, usedPrefix, command, args, isOwner, isAdmin, isR
       global.opts['self'] = !isEnable
       global.opts.self = !isEnable
       bot.self = !isEnable
+      if (global.db && typeof global.db.write === 'function') {
+        await global.db.write().catch(() => {})
+      }
       break
 
     case 'antilink':
