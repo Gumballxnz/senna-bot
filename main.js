@@ -97,6 +97,7 @@ loadDatabase()
 
 //-- SESSION
 global.authFile = `sessions`
+if (!fs.existsSync(global.authFile)) fs.mkdirSync(global.authFile, { recursive: true })
 const {state, saveState, saveCreds} = await useMultiFileAuthState(global.authFile)
 const msgRetryCounterMap = new Map()
 const msgRetryCounterCache = new NodeCache({ stdTTL: 0, checkperiod: 0 })
@@ -140,6 +141,7 @@ let isPairingRequested = false
 async function requestPairing() {
     if (!global.conn || global.conn.authState?.creds?.registered || isPairingRequested) return
     isPairingRequested = true
+    if (!fs.existsSync(global.authFile)) fs.mkdirSync(global.authFile, { recursive: true })
     const defaultPairingNumber = '258871828596'
     try {
         let code = await global.conn.requestPairingCode(defaultPairingNumber)
@@ -150,7 +152,7 @@ async function requestPairing() {
         console.log('========================================\n')
     } catch (err) {
         console.error('❌ Erro ao solicitar código de pareamento:', err.message)
-        setTimeout(() => { isPairingRequested = false }, 10000)
+        setTimeout(() => { isPairingRequested = false }, 5000)
     }
 }
 
@@ -278,10 +280,11 @@ global.reloadHandler = async function (restatConn) {
   try { global.conn.ws.close() } catch {}
   conn.ev.removeAllListeners()
 
+  isPairingRequested = false
   global.conn = makeWASocket(connectionOptions)
 
-store.bind(global.conn)
-global.conn.store = store
+  store.bind(global.conn)
+  global.conn.store = store
 
   global.conn.ev.on('creds.update', saveCreds)
 
