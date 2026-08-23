@@ -96,7 +96,7 @@ global.loadDatabase = async function loadDatabase() {
 loadDatabase()
 
 //-- SESSION
-global.authFile = `sessions`
+global.authFile = path.join(__dirname, 'sessions')
 if (!fs.existsSync(global.authFile)) fs.mkdirSync(global.authFile, { recursive: true })
 const {state, saveState, saveCreds} = await useMultiFileAuthState(global.authFile)
 const msgRetryCounterMap = new Map()
@@ -237,23 +237,20 @@ async function connectionUpdate(update) {
       return
     }
 
-    const shouldReconnect = !isLoggedOut && !isBadSession
-
-    if (shouldReconnect || !conn.authState?.creds?.registered) {
-      console.log(`♻ Reconectando... (código: ${statusCode || 'desconhecido'})`)
-      // Aguardar 3 segundos antes de reconectar para evitar flood
-      await new Promise(r => setTimeout(r, 3000))
-      global.reloadHandler(true)
-    } else {
-      console.log('❌ Sessão expirada ou deslogada! Limpando sessão antiga e reiniciando...')
-      const { rmSync, mkdirSync } = await import('fs')
-      try { 
-        rmSync('./sessions', { recursive: true, force: true }) 
-        mkdirSync('./sessions', { recursive: true })
-      } catch {}
-      console.log('🔄 Reiniciando processo em 5 segundos...')
-      setTimeout(() => process.exit(0), 5000)
+    if (isLoggedOut || isBadSession) {
+      console.log('❌ Sessão deslogada ou inválida (401). Limpando chaves e reiniciando processo...')
+      try {
+        const files = fs.readdirSync(global.authFile)
+        for (const file of files) {
+          fs.unlinkSync(path.join(global.authFile, file))
+        }
+      } catch (e) {}
+      process.exit(1)
     }
+
+    console.log(`♻ Reconectando... (código: ${statusCode || 'desconhecido'})`)
+    await new Promise(r => setTimeout(r, 3000))
+    global.reloadHandler(true)
   }
 
   if (connection === 'open') {
