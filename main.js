@@ -200,8 +200,14 @@ async function clearTmp() {
 async function connectionUpdate(update) {
   const { connection, lastDisconnect, qr } = update
 
-  if (qr && !global.conn?.authState?.creds?.registered) {
-    requestPairing()
+  if (qr) {
+    try {
+      await qrcode.toFile('./qr.png', qr)
+      console.log('📸 QR Code salvo em ./qr.png')
+    } catch (e) {}
+    if (!global.conn?.authState?.creds?.registered) {
+      requestPairing()
+    }
   }
 
   if (connection === 'close') {
