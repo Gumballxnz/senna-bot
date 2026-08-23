@@ -233,17 +233,18 @@ async function connectionUpdate(update) {
 
     const shouldReconnect = !isLoggedOut && !isBadSession
 
-    if (shouldReconnect) {
+    if (shouldReconnect || !conn.authState?.creds?.registered) {
       console.log(`♻ Reconectando... (código: ${statusCode || 'desconhecido'})`)
       // Aguardar 3 segundos antes de reconectar para evitar flood
       await new Promise(r => setTimeout(r, 3000))
       global.reloadHandler(true)
     } else {
-      console.log('❌ Sessão expirada ou corrompida! Limpando sessão antiga e reiniciando...')
-      // Limpar sessão corrompida automaticamente
-      const { rmSync } = await import('fs')
-      try { rmSync('./sessions', { recursive: true, force: true }) } catch {}
-      // Reiniciar o processo para gerar novo código de pareamento
+      console.log('❌ Sessão expirada ou deslogada! Limpando sessão antiga e reiniciando...')
+      const { rmSync, mkdirSync } = await import('fs')
+      try { 
+        rmSync('./sessions', { recursive: true, force: true }) 
+        mkdirSync('./sessions', { recursive: true })
+      } catch {}
       console.log('🔄 Reiniciando processo em 5 segundos...')
       setTimeout(() => process.exit(0), 5000)
     }
