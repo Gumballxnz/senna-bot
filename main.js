@@ -136,20 +136,26 @@ conn.store = store
 conn.ev.on('creds.update', saveCreds)
 
 // Código de Pareamento Automático para o número principal
-if (!conn.authState.creds.registered) {
+let isPairingRequested = false
+async function requestPairing() {
+    if (!global.conn || global.conn.authState?.creds?.registered || isPairingRequested) return
+    isPairingRequested = true
     const defaultPairingNumber = '258871828596'
-    setTimeout(async () => {
-        try {
-            let code = await conn.requestPairingCode(defaultPairingNumber)
-            code = code?.match(/.{1,4}/g)?.join("-") || code
-            console.log('\n========================================')
-            console.log(`📱 NÚMERO DE PAREAMENTO: +${defaultPairingNumber}`)
-            console.log(`🔑 CÓDIGO DE PAREAMENTO: ${code}`)
-            console.log('========================================\n')
-        } catch (err) {
-            console.error('❌ Erro ao solicitar código de pareamento:', err.message)
-        }
-    }, 4000)
+    try {
+        let code = await global.conn.requestPairingCode(defaultPairingNumber)
+        code = code?.match(/.{1,4}/g)?.join("-") || code
+        console.log('\n========================================')
+        console.log(`📱 NÚMERO DE PAREAMENTO: +${defaultPairingNumber}`)
+        console.log(`🔑 CÓDIGO DE PAREAMENTO: ${code}`)
+        console.log('========================================\n')
+    } catch (err) {
+        console.error('❌ Erro ao solicitar código de pareamento:', err.message)
+        setTimeout(() => { isPairingRequested = false }, 10000)
+    }
+}
+
+if (!conn.authState.creds.registered) {
+    setTimeout(requestPairing, 3000)
 }
 
 conn.isInit = false
@@ -187,24 +193,13 @@ async function clearTmp() {
   }
 }
 
-// Auto clear tmp interval incondicional removido (Evita dupla limpeza, agora usa o da linha 196)
-
 
 
 async function connectionUpdate(update) {
   const { connection, lastDisconnect, qr } = update
 
-  if (qr) {
-    try {
-      await qrcode.toFile('./qr.png', qr)
-      console.log('📸 QR Code salvo em ./qr.png')
-    } catch (e) {}
-    qrcode.toString(qr, { type: 'terminal', small: true }, function (err, str) {
-      if (!err) {
-        console.log('\n' + str)
-        console.log('📱 ESCANEIE O QR CODE ACIMA NO SEU WHATSAPP!\n')
-      }
-    })
+  if (qr && !global.conn?.authState?.creds?.registered) {
+    requestPairing()
   }
 
   if (connection === 'close') {
