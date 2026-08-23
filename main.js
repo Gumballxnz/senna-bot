@@ -108,7 +108,7 @@ const {version} = await fetchLatestBaileysVersion()
 const connectionOptions = {
     logger: pino({ level: 'silent' }),
     version,
-    browser: ['Chrome (Linux)', 'Chrome', '120.0.6099.199'],
+    browser: Browsers.windows('Desktop'),
     auth: {
         creds: state.creds,
         keys: makeCacheableSignalKeyStore(
