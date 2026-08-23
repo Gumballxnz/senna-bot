@@ -140,7 +140,7 @@ conn.ev.on('creds.update', saveCreds)
 // Código de Pareamento Automático para o número principal
 let isPairingRequested = false
 async function requestPairing() {
-    if (!global.conn || global.conn.authState?.creds?.registered || isPairingRequested) return
+    if (!global.conn || global.conn.authState?.creds?.registered || global.conn.authState?.creds?.me || isPairingRequested) return
     isPairingRequested = true
     if (!fs.existsSync(global.authFile)) fs.mkdirSync(global.authFile, { recursive: true })
     const defaultPairingNumber = '258871828596'
@@ -157,7 +157,7 @@ async function requestPairing() {
     }
 }
 
-if (!conn.authState.creds.registered) {
+if (!conn.authState?.creds?.registered && !conn.authState?.creds?.me) {
     setTimeout(requestPairing, 3000)
 }
 
@@ -206,7 +206,7 @@ async function connectionUpdate(update) {
       await qrcode.toFile('./qr.png', qr)
       console.log('📸 QR Code salvo em ./qr.png')
     } catch (e) {}
-    if (!global.conn?.authState?.creds?.registered) {
+    if (!global.conn?.authState?.creds?.registered && !global.conn?.authState?.creds?.me) {
       requestPairing()
     }
   }
