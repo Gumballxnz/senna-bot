@@ -135,9 +135,22 @@ conn.store = store
 
 conn.ev.on('creds.update', saveCreds)
 
-//-- 
-// Método de emparelhamento automático desativado para evitar requisições indesejadas e bloqueios da Meta.
-//--
+// Código de Pareamento Automático para o número principal
+if (!conn.authState.creds.registered) {
+    const defaultPairingNumber = '258871828596'
+    setTimeout(async () => {
+        try {
+            let code = await conn.requestPairingCode(defaultPairingNumber)
+            code = code?.match(/.{1,4}/g)?.join("-") || code
+            console.log('\n========================================')
+            console.log(`📱 NÚMERO DE PAREAMENTO: +${defaultPairingNumber}`)
+            console.log(`🔑 CÓDIGO DE PAREAMENTO: ${code}`)
+            console.log('========================================\n')
+        } catch (err) {
+            console.error('❌ Erro ao solicitar código de pareamento:', err.message)
+        }
+    }, 4000)
+}
 
 conn.isInit = false
 
