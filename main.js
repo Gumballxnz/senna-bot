@@ -108,7 +108,7 @@ const {version} = await fetchLatestBaileysVersion()
 const connectionOptions = {
     logger: pino({ level: 'silent' }),
     version,
-    browser: Browsers.ubuntu('Chrome'),
+    browser: ['Chrome (Linux)', 'Chrome', '120.0.6099.199'],
     auth: {
         creds: state.creds,
         keys: makeCacheableSignalKeyStore(
@@ -118,6 +118,7 @@ const connectionOptions = {
     },
     markOnlineOnConnect: true,
     generateHighQualityLinkPreview: false,
+    syncFullHistory: false,
     defaultQueryTimeoutMs: 300000,
     connectTimeoutMs: 60000,
     msgRetryCounterCache,
