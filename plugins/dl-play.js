@@ -49,16 +49,26 @@ Responda com 1 ou 2:
     let thumb = thumbnail || (vid.videoId ? `https://i.ytimg.com/vi/${vid.videoId}/hqdefault.jpg` : './src/avatar_contact.png')
     await conn.sendFile(m.chat, thumb, "play.jpg", msg, m, false, { asImage: true })
 
-    confirmation[m.sender] = {
+    const senderId = m.sender
+    const cleanSender = conn.decodeJid ? conn.decodeJid(m.sender) : m.sender.split('@')[0]
+    const chatKey = `${m.chat}_${cleanSender}`
+
+    const confData = {
         sender: m.sender,
         to: who,
         url: url, 
         title: title, // Salva o nome real
         chat: chat, 
         timeout: setTimeout(() => {
-            delete confirmation[m.sender];
-        }, 60000), // 1 minuto
+            delete confirmation[senderId];
+            delete confirmation[cleanSender];
+            delete confirmation[chatKey];
+        }, 180000), // 3 minutos
     };
+
+    confirmation[senderId] = confData
+    confirmation[cleanSender] = confData
+    confirmation[chatKey] = confData
 }
 
 handler.help = ['play']
@@ -69,13 +79,22 @@ export default handler
 
 handler.before = async (m, { conn }) => {
     if (m.isBaileys) return; 
-    if (!(m.sender in confirmation)) return; 
-
-    let { sender, timeout, url, chat, title } = confirmation[m.sender];
     
-    if (m.text.trim() === '1') {
+    const senderId = m.sender
+    const cleanSender = conn.decodeJid ? conn.decodeJid(m.sender) : m.sender?.split('@')[0]
+    const chatKey = `${m.chat}_${cleanSender}`
+
+    const conf = confirmation[senderId] || confirmation[cleanSender] || confirmation[chatKey]
+    if (!conf) return; 
+
+    let { sender, timeout, url, chat, title } = conf;
+    const answer = m.text ? m.text.trim().toLowerCase() : ''
+    
+    if (/^(1|mp3|audio|áudio)$/i.test(answer)) {
         clearTimeout(timeout);
-        delete confirmation[m.sender];
+        delete confirmation[senderId];
+        delete confirmation[cleanSender];
+        delete confirmation[chatKey];
         m.react(rwait)
         try {
             let resDL = await downloadYT(url, 'audio')
@@ -93,9 +112,11 @@ handler.before = async (m, { conn }) => {
             m.reply(`❎ Erro ao baixar áudio: ${e.message}`)
         }
 
-    } else if (m.text.trim() === '2') {
+    } else if (/^(2|mp4|video|vídeo)$/i.test(answer)) {
         clearTimeout(timeout);
-        delete confirmation[m.sender];
+        delete confirmation[senderId];
+        delete confirmation[cleanSender];
+        delete confirmation[chatKey];
         m.react(rwait)
         try {
             let resDL = await downloadYT(url, 'video')
