@@ -46,7 +46,8 @@ Responda com 1 ou 2:
 2 = MP4 (Vídeo)  ~ ${videoSize} MB 🎬
 `
 
-    await conn.sendFile(m.chat, thumbnail, "play.jpg", msg, m)
+    let thumb = thumbnail || (vid.videoId ? `https://i.ytimg.com/vi/${vid.videoId}/hqdefault.jpg` : './src/avatar_contact.png')
+    await conn.sendFile(m.chat, thumb, "play.jpg", msg, m, false, { asImage: true })
 
     confirmation[m.sender] = {
         sender: m.sender,
