@@ -1,6 +1,7 @@
 
 import { searchYouTube, downloadYT } from '../lib/ytHelper.js'
 import fs from 'fs'
+import axios from 'axios'
 import { exec } from 'child_process'
 import { promisify } from 'util'
 
@@ -23,7 +24,7 @@ let handler = async (m, { conn, args, text, usedPrefix, command }) => {
         throw `❎ Video não encontrado`
     }
 
-    let { title, thumbnail, url, timestamp, views, ago, seconds } = vid
+    let { title, thumbnail, url, timestamp, views, ago, seconds, videoId } = vid
 
     // --- PREDIÇÃO DE PESO REFINADA (Instantânea) ---
     // Áudio 128kbps ~ 1MB por minuto (0.016MB/s)
@@ -46,8 +47,27 @@ Responda com 1 ou 2:
 2 = MP4 (Vídeo)  ~ ${videoSize} MB 🎬
 `
 
-    let thumb = thumbnail || (vid.videoId ? `https://i.ytimg.com/vi/${vid.videoId}/hqdefault.jpg` : './src/avatar_contact.png')
-    await conn.sendFile(m.chat, thumb, "play.jpg", msg, m, false, { asImage: true })
+    let thumbUrl = thumbnail || (videoId ? `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg` : null)
+    let sent = false
+
+    if (thumbUrl) {
+        try {
+            const imgRes = await axios.get(thumbUrl, { responseType: 'arraybuffer', timeout: 7000 })
+            if (imgRes.data && imgRes.data.length > 100) {
+                await conn.sendMessage(m.chat, {
+                    image: Buffer.from(imgRes.data),
+                    caption: msg
+                }, { quoted: m })
+                sent = true
+            }
+        } catch (err) {
+            console.warn('[play] Erro ao baixar thumbnail para envio:', err.message)
+        }
+    }
+
+    if (!sent) {
+        await m.reply(msg)
+    }
 
     const senderId = m.sender
     const cleanSender = conn.decodeJid ? conn.decodeJid(m.sender) : m.sender.split('@')[0]
