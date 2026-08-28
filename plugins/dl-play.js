@@ -1,6 +1,5 @@
 
-import yts from 'yt-search'
-import { downloadYT } from '../lib/ytHelper.js'
+import { searchYouTube, downloadYT } from '../lib/ytHelper.js'
 import fs from 'fs'
 import { exec } from 'child_process'
 import { promisify } from 'util'
@@ -16,8 +15,8 @@ let handler = async (m, { conn, args, text, usedPrefix, command }) => {
     let chat = global.db.data.chats[m.chat];
 
     m.react(rwait)
-    let res = await yts(text)
-    let vid = res.videos[0]
+    let res = await searchYouTube(text)
+    let vid = res.videos && res.videos[0]
 
     if (!vid) {
         m.react('❌')

@@ -512,7 +512,7 @@ const isBotAdmin = !!bot?.admin
                         let text = format(e)
                         for (let key of Object.values(global.APIKeys))
                             text = text.replace(new RegExp(key, 'g'), '#HIDDEN#')
-                           m.reply(e) //error en el comando
+                        m.reply(text) //error en el comando
                          // console.error(e)
                     }
                 } finally {

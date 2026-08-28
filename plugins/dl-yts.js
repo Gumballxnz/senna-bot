@@ -1,9 +1,10 @@
 
-import yts from 'yt-search'
+import { searchYouTube } from '../lib/ytHelper.js'
 let handler = async (m, {conn, text }) => {
   if (!text) throw `✳️ Insira lo que desea buscar en YT`
-  let results = await yts(text)
-	let tes = results.videos
+  let results = await searchYouTube(text)
+  let tes = results.videos || []
+  if (!tes.length) throw `❎ Nenhum vídeo encontrado`
 let teks = tes.map(v => `
 📌 ${v.title}
 *⌚Duracion:* ${v.timestamp}
