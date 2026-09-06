@@ -32,22 +32,6 @@ export async function handler(chatUpdate) {
         return
     //this.pushMessage(chatUpdate.messages).catch(console.error)
 
-    // Confirmação de Leitura Automática (Tique Azul)
-    if (chatUpdate.messages) {
-        for (const message of chatUpdate.messages) {
-            if (message.key && !message.key.fromMe) {
-                try {
-                    if (typeof this.readMessages === 'function') {
-                        await this.readMessages([message.key]).catch(() => {})
-                    } else if (typeof this.chatRead === 'function') {
-                        await this.chatRead(message.key.remoteJid, message.key.participant || undefined, message.key.id).catch(() => {})
-                    }
-                } catch (e) {
-                    console.error('Erro ao marcar mensagem como lida:', e)
-                }
-            }
-        }
-    }
 
     let m = chatUpdate.messages[chatUpdate.messages.length - 1]
     if (!m)
