@@ -13,55 +13,45 @@ let handler = async (m, { conn, text, args, usedPrefix, command }) => {
 
   let success = false
 
-  // Motor 1: Cobalt API (Principal - Rápido e Seguro)
+  // Motor 1: fg-senna (Direto, Rápido, Buffer nativo)
   try {
-    const { downloadCobalt } = await import('../lib/ytHelper.js')
-    let cobaltRes = await downloadCobalt(args[0])
-    if (cobaltRes) {
-      if (cobaltRes.isPicker) {
-        for (let url of cobaltRes.items) {
-          await conn.sendFile(m.chat, url, 'instagram.mp4', `✅ Resultado`, m, null, fwc)
-        }
-        success = true
-        m.react(done)
-        return
-      } else if (fs.existsSync(cobaltRes.filePath)) {
-        await conn.sendFile(m.chat, cobaltRes.filePath, cobaltRes.title || 'instagram.mp4', `✅ *Instagram (Cobalt)*`, m, null, fwc)
-        if (fs.existsSync(cobaltRes.filePath)) fs.unlinkSync(cobaltRes.filePath)
-        success = true
-        m.react(done)
-        return
+    let data = await fg.igdl(args[0])
+    if (data) {
+      let urls = []
+      if (data.result && Array.isArray(data.result) && data.result.length >= 1) {
+        urls = data.result.map(i => i.url || i.dl_url).filter(Boolean)
+      } else if (data.dl_url) {
+        urls = [data.dl_url]
+      } else if (data.url) {
+        urls = [data.url]
       }
-    }
-  } catch (e) {
-    console.error('❌ [IGDL] Cobalt falhou:', e.message)
-  }
 
-  // Motor 2: fg-senna (API externa)
-  let data = null
-  if (!success) {
-    try {
-      data = await fg.igdl(args[0])
-      if (data) {
-        let urls = []
-        if (data.result && data.result.length >= 1) {
-          urls = data.result.map(i => i.url)
-        } else if (data.dl_url) {
-          urls = [data.dl_url]
-        }
-
-        if (urls.length >= 1) {
-          for (let url of urls) {
-            await conn.sendFile(m.chat, url, 'instagram.mp4', `✅ Resultado`, m, null, fwc)
+      if (urls.length >= 1) {
+        const axios = (await import('axios')).default
+        for (let url of urls) {
+          try {
+            const res = await axios.get(url, {
+              responseType: 'arraybuffer',
+              headers: { 'User-Agent': 'TelegramBot (like TwitterBot)' },
+              timeout: 45000
+            })
+            const buffer = Buffer.from(res.data)
+            const isVideo = url.includes('.mp4') || (res.headers['content-type'] && res.headers['content-type'].includes('video')) || buffer.toString('utf8', 4, 12).includes('ftyp')
+            const filename = isVideo ? 'instagram.mp4' : 'instagram.jpg'
+            await conn.sendFile(m.chat, buffer, filename, `✅ Resultado`, m, null, fwc)
+            success = true
+          } catch (dlErr) {
+            console.error('❌ [IGDL] Erro ao baixar buffer:', dlErr.message)
           }
-          success = true
+        }
+        if (success) {
           m.react(done)
           return
         }
       }
-    } catch (e) {
-      console.error('❌ [IGDL] fg-senna falhou:', e.message)
     }
+  } catch (e) {
+    console.error('❌ [IGDL] fg-senna falhou:', e.message)
   }
 
   // Motor 3: yt-dlp local (Alta Qualidade como fallback)

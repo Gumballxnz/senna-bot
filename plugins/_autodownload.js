@@ -95,39 +95,35 @@ export async function before(m, { conn, isOwner }) {
             let data = await fg.igdl(link).catch(() => null)
             let success = false
             
-            // Tentativa 1: Galeria / Mídia Única (Loop/Envio Direto da API)
-            if (data?.result && data.result.length >= 1) {
-                for (let i of data.result) {
-                    await conn.sendFile(m.chat, i.url, 'instagram.mp4', `✅ *Auto DL: Instagram*`, m, null, fwc)
-                }
-                success = true
-                m.react(done)
-            } 
-            
-            // Tentativa 1.5: Cobalt API (Hospedado/Rápido) - Evita bloqueio de IP da VPS
-            if (!success) {
-                try {
-                    const { downloadCobalt } = await import('../lib/ytHelper.js')
-                    let cobaltRes = await downloadCobalt(link)
-                    if (cobaltRes) {
-                        if (cobaltRes.isPicker) {
-                            // Carrossel de Imagens/Vídeos
-                            for (let url of cobaltRes.items) {
-                                await conn.sendFile(m.chat, url, 'instagram.mp4', `✅ *Auto DL: Instagram*`, m, null, fwc)
-                            }
-                            success = true
-                            m.react(done)
-                        } else if (fs.existsSync(cobaltRes.filePath)) {
-                            // Mídia Única
-                            await conn.sendFile(m.chat, cobaltRes.filePath, cobaltRes.title || 'instagram.mp4', `✅ *Auto DL: Instagram (Cobalt)*`, m, null, fwc)
-                            if (fs.existsSync(cobaltRes.filePath)) fs.unlinkSync(cobaltRes.filePath)
-                            success = true
-                            m.react(done)
-                        }
+            // Tentativa 1: fg-senna (Galeria / Mídia Única / Imagens com áudio)
+            let mediaList = []
+            if (data?.result && Array.isArray(data.result) && data.result.length > 0) {
+                mediaList = data.result.map(i => i.url || i.dl_url).filter(Boolean)
+            } else if (data?.dl_url) {
+                mediaList = [data.dl_url]
+            } else if (data?.url) {
+                mediaList = [data.url]
+            }
+
+            if (mediaList.length > 0) {
+                const axios = (await import('axios')).default
+                for (let mediaUrl of mediaList) {
+                    try {
+                        const res = await axios.get(mediaUrl, {
+                            responseType: 'arraybuffer',
+                            headers: { 'User-Agent': 'TelegramBot (like TwitterBot)' },
+                            timeout: 45000
+                        })
+                        const buffer = Buffer.from(res.data)
+                        const isVideo = mediaUrl.includes('.mp4') || (res.headers['content-type'] && res.headers['content-type'].includes('video')) || buffer.toString('utf8', 4, 12).includes('ftyp')
+                        const filename = isVideo ? 'instagram.mp4' : 'instagram.jpg'
+                        await conn.sendFile(m.chat, buffer, filename, `✅ *Auto DL: Instagram*`, m, null, fwc)
+                        success = true
+                    } catch (dlErr) {
+                        console.error('❌ [AutoDL IG] Erro ao baixar buffer:', dlErr.message)
                     }
-                } catch (e) {
-                    console.error('❌ [AutoDL IG] Cobalt fallback failed:', e.message)
                 }
+                if (success) m.react(done)
             }
             
             // Tentativa 2: yt-dlp local (Alta Qualidade)
