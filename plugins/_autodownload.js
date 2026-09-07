@@ -19,7 +19,7 @@ export async function before(m, { conn, isOwner }) {
     if (global.prefix.test(text)) return false
 
     const tiktokRegex = /https?:\/\/(www\.|v[mt]\.|vt\.)?tiktok\.com\/[^\s]*/i
-    const facebookRegex = /https?:\/\/(www\.|web\.|m\.)?(facebook\.com|fb\.watch)\/[^\s]*/i
+    const facebookRegex = /https?:\/\/(www\.|web\.|m\.)?(facebook\.com|fb\.watch|fb\.com)\/[^\s]*/i
     const instagramRegex = /https?:\/\/(www\.)?instagram\.com\/(p|reel|tv|stories)\/[^\s]+|https?:\/\/instagr\.am\/[^\s]+/i
     const mediafireRegex = /https?:\/\/(www\.)?mediafire\.com\/file\/[^\s]*/i
     const megaRegex = /https?:\/\/mega\.nz\/file\/[^\s]*/i
@@ -35,6 +35,7 @@ export async function before(m, { conn, isOwner }) {
         found = true
         m.react(rwait)
         try {
+            let success = false
             // Tentativa 1: fg-senna (Direto e Rápido)
             try {
                 let data = await fg.tiktok(link)
@@ -196,91 +197,44 @@ export async function before(m, { conn, isOwner }) {
         }
     }
 
-    // Facebook (Híbrido)
+    // Facebook (yt-dlp Direto)
     if (!found && facebookRegex.test(text)) {
         let link = text.match(facebookRegex)[0]
         found = true
         m.react(rwait)
+        const TEMP_DIR = path.join(process.cwd(), 'tmp')
+        if (!fs.existsSync(TEMP_DIR)) fs.mkdirSync(TEMP_DIR, { recursive: true })
+        const rawPath = path.join(TEMP_DIR, `fb_raw_${Date.now()}.mp4`)
+        const finalPath = path.join(TEMP_DIR, `fb_${Date.now()}.mp4`)
+
         try {
-            let success = false
-            
-            // Tentativa 1: Cobalt API (Principal - Evita bloqueio de IP da VPS)
-            try {
-                const { downloadCobalt } = await import('../lib/ytHelper.js')
-                let cobaltRes = await downloadCobalt(link)
-                if (cobaltRes && !cobaltRes.isPicker && fs.existsSync(cobaltRes.filePath)) {
-                    await conn.sendFile(m.chat, cobaltRes.filePath, cobaltRes.title || 'fb.mp4', `✅ *Auto DL: Facebook (Cobalt)*`, m, null, fwc)
-                    if (fs.existsSync(cobaltRes.filePath)) fs.unlinkSync(cobaltRes.filePath)
-                    success = true
-                }
-            } catch (ee) {
-                console.error('Cobalt Facebook failed, falling back to APIs...')
-            }
-
-            // Tentativa 2: APIs de terceiros
-            if (!success) {
-                let url = null;
+            await execAsync(`yt-dlp -f "b[vcodec^=avc]/b[vcodec^=h264]/hd/sd/bestvideo[ext=mp4]+bestaudio[ext=m4a]/best" --merge-output-format mp4 -o "${rawPath}" "${link}"`, { timeout: 120000 })
+            if (fs.existsSync(rawPath)) {
+                let codec = 'h264'
                 try {
-                    const fetch = (await import('node-fetch')).default;
-                    
-                    let sp = await fetch(`https://api.siputzx.my.id/api/d/facebook?url=${encodeURIComponent(link)}`).then(v => v.json()).catch(() => null);
-                    url = sp?.data?.url || sp?.data?.hd || sp?.data?.sd;
-
-                    if (!url) {
-                        let rz = await fetch(`https://api.ryzendesu.vip/api/downloader/fbdl?url=${encodeURIComponent(link)}`).then(v => v.json()).catch(() => null);
-                        url = rz?.url || rz?.data?.url || rz?.result?.url_hd || rz?.result?.url_sd;
-                    }
-
-                    if (!url) {
-                        let fgRes = await fg.fbdl(link).catch(() => null);
-                        url = fgRes?.HD || fgRes?.SD;
-                    }
-
-                    if (url) {
-                        await conn.sendFile(m.chat, url, 'fb.mp4', `✅ *Auto DL: Facebook*`, m, null, fwc)
-                        success = true
-                    }
-                } catch (apiErr) {
-                    console.error('Facebook DL API fallback failed, falling back to local tools:', apiErr.message)
+                    const { stdout } = await execAsync(`ffprobe -v error -select_streams v:0 -show_entries stream=codec_name -of default=noprint_wrappers=1:nokey=1 "${rawPath}"`)
+                    if (stdout) codec = stdout.trim()
+                } catch(e){}
+                
+                let ffmpegCmd = codec === 'h264' 
+                    ? `ffmpeg -i "${rawPath}" -c:v copy -c:a aac -b:a 128k -movflags +faststart -y "${finalPath}"`
+                    : `ffmpeg -i "${rawPath}" -c:v libx264 -preset fast -crf 28 -c:a aac -b:a 128k -movflags +faststart -y "${finalPath}"`
+    
+                await execAsync(ffmpegCmd, { timeout: 180000 })
+                if (fs.existsSync(rawPath)) fs.unlinkSync(rawPath)
+                if (fs.existsSync(finalPath)) {
+                    await conn.sendFile(m.chat, finalPath, 'fb.mp4', `✅ *Auto DL: Facebook*`, m, null, fwc)
+                    fs.unlinkSync(finalPath)
+                    m.react(done)
+                } else {
+                    throw new Error('Falha ao gerar arquivo processado.')
                 }
+            } else {
+                throw new Error('Falha ao baixar vídeo do Facebook via yt-dlp.')
             }
-
-            if (!success) {
-                // Ligar o motor yt-dlp local (como último recurso)
-                const TEMP_DIR = path.join(process.cwd(), 'tmp')
-                if (!fs.existsSync(TEMP_DIR)) fs.mkdirSync(TEMP_DIR, { recursive: true })
-                const rawPath = path.join(TEMP_DIR, `fb_raw_${Date.now()}.mp4`)
-                const finalPath = path.join(TEMP_DIR, `fb_${Date.now()}.mp4`)
-
-                try {
-                    await execAsync(`yt-dlp -f "b[vcodec^=avc]/b[vcodec^=h264]/hd/sd/bestvideo[ext=mp4]+bestaudio[ext=m4a]/best" --merge-output-format mp4 -o "${rawPath}" "${link}"`, { timeout: 120000 })
-                    if (fs.existsSync(rawPath)) {
-                        let codec = 'h264'
-                        try {
-                            const { stdout } = await execAsync(`ffprobe -v error -select_streams v:0 -show_entries stream=codec_name -of default=noprint_wrappers=1:nokey=1 "${rawPath}"`)
-                            if (stdout) codec = stdout.trim()
-                        } catch(e){}
-                        
-                        let ffmpegCmd = codec === 'h264' 
-                            ? `ffmpeg -i "${rawPath}" -c:v copy -c:a aac -b:a 128k -movflags +faststart -y "${finalPath}"`
-                            : `ffmpeg -i "${rawPath}" -c:v libx264 -preset fast -crf 28 -c:a aac -b:a 128k -movflags +faststart -y "${finalPath}"`
-            
-                        await execAsync(ffmpegCmd, { timeout: 180000 })
-                        if (fs.existsSync(rawPath)) fs.unlinkSync(rawPath)
-                        if (fs.existsSync(finalPath)) {
-                            await conn.sendFile(m.chat, finalPath, 'fb.mp4', `✅ *Auto DL: Facebook (HD)*`, m, null, fwc)
-                            fs.unlinkSync(finalPath)
-                            success = true
-                        }
-                    }
-                } catch (ee) {
-                    console.error('yt-dlp Facebook local failed:', ee.message)
-                }
-            }
-
-            if (!success) throw new Error('Não foi possível baixar o Facebook através das APIs ou localmente')
-            m.react(done)
         } catch (e) {
+            if (fs.existsSync(rawPath)) try { fs.unlinkSync(rawPath) } catch(_) {}
+            if (fs.existsSync(finalPath)) try { fs.unlinkSync(finalPath) } catch(_) {}
             console.error('AutoDL Facebook Error:', e)
             m.react('❌')
             m.reply(`❎ Erro ao baixar Facebook: Verifique se o link é público.`)
