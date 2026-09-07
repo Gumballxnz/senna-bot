@@ -108,6 +108,7 @@ export async function before(m, { conn, isOwner }) {
 
             if (mediaList.length > 0) {
                 const axios = (await import('axios')).default
+                const sharp = (await import('sharp')).default
                 for (let mediaUrl of mediaList) {
                     try {
                         const res = await axios.get(mediaUrl, {
@@ -115,10 +116,18 @@ export async function before(m, { conn, isOwner }) {
                             headers: { 'User-Agent': 'TelegramBot (like TwitterBot)' },
                             timeout: 45000
                         })
-                        const buffer = Buffer.from(res.data)
+                        let buffer = Buffer.from(res.data)
                         const isVideo = mediaUrl.includes('.mp4') || (res.headers['content-type'] && res.headers['content-type'].includes('video')) || buffer.toString('utf8', 4, 12).includes('ftyp')
-                        const filename = isVideo ? 'instagram.mp4' : 'instagram.jpg'
-                        await conn.sendFile(m.chat, buffer, filename, `✅ *Auto DL: Instagram*`, m, null, fwc)
+                        if (!isVideo) {
+                            if (buffer.slice(0, 4).toString() === 'RIFF') {
+                                try {
+                                    buffer = await sharp(buffer).jpeg({ quality: 92 }).toBuffer()
+                                } catch (_) {}
+                            }
+                            await conn.sendFile(m.chat, buffer, 'instagram.jpg', `✅ *Auto DL: Instagram*`, m, null, fwc)
+                        } else {
+                            await conn.sendFile(m.chat, buffer, 'instagram.mp4', `✅ *Auto DL: Instagram*`, m, null, fwc)
+                        }
                         success = true
                     } catch (dlErr) {
                         console.error('❌ [AutoDL IG] Erro ao baixar buffer:', dlErr.message)
