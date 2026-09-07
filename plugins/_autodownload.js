@@ -11,7 +11,8 @@ const execAsync = promisify(exec)
 export async function before(m, { conn, isOwner }) {
     if (m.isBaileys || m.fromMe || !m.text) return false
     let chat = global.db.data.chats[m.chat]
-    if (!chat || !chat.autodl) return false
+    const autodlAtivo = m.isGroup ? !!(chat && chat.autodl) : true
+    if (!autodlAtivo) return false
 
     let text = m.text
     // Se a mensagem começa com um prefixo de comando, ignorar AutoDL
@@ -123,7 +124,10 @@ export async function before(m, { conn, isOwner }) {
                         console.error('❌ [AutoDL IG] Erro ao baixar buffer:', dlErr.message)
                     }
                 }
-                if (success) m.react(done)
+                if (success) {
+                    m.react(done)
+                    return
+                }
             }
             
             // Tentativa 2: yt-dlp local (Alta Qualidade)
