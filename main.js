@@ -297,12 +297,12 @@ global.reloadHandler = async function (restatConn) {
 }
 
   if (!isInit) {
-    conn.ev.off('messages.upsert', conn.handler)
-    conn.ev.off('group-participants.update', conn.participantsUpdate)
-    conn.ev.off('groups.update', conn.groupsUpdate)
-    conn.ev.off('message.delete', conn.onDelete)
-    conn.ev.off('connection.update', conn.connectionUpdate)
-    conn.ev.off('creds.update', conn.credsUpdate)
+    if (conn.handler) conn.ev.off('messages.upsert', conn.handler)
+    if (conn.participantsUpdate) conn.ev.off('group-participants.update', conn.participantsUpdate)
+    if (conn.groupsUpdate) conn.ev.off('groups.update', conn.groupsUpdate)
+    if (conn.onDelete) conn.ev.off('message.delete', conn.onDelete)
+    if (conn.connectionUpdate) conn.ev.off('connection.update', conn.connectionUpdate)
+    if (conn.credsUpdate) conn.ev.off('creds.update', conn.credsUpdate)
     if (conn.messagesUpdateHandler) conn.ev.off('messages.update', conn.messagesUpdateHandler)
   }
 
