@@ -13,43 +13,13 @@ let handler = async (m, { conn, text, args, usedPrefix, command }) => {
   
     try {
         let success = false
-        let tex = `✅ *TikTok DL (Cobalt)*`
 
-        // Motor 1: Cobalt API (Principal)
-        try {
-            const { downloadCobalt } = await import('../lib/ytHelper.js')
-            let cobaltRes = await downloadCobalt(args[0])
-            if (cobaltRes) {
-                if (cobaltRes.isPicker) {
-                    // Carrossel
-                    let cap = `✅ *TikTok Slideshow*`
-                    for (let img of cobaltRes.items) {
-                        await conn.sendMessage(m.chat, { image: { url: img }, caption: cap }, { quoted: m })
-                    }
-                    success = true
-                    m.react(done)
-                    return
-                } else if (fs.existsSync(cobaltRes.filePath)) {
-                    // Vídeo único
-                    await conn.sendFile(m.chat, cobaltRes.filePath, 'tiktok.mp4', tex, m, null, fwc)
-                    if (fs.existsSync(cobaltRes.filePath)) fs.unlinkSync(cobaltRes.filePath)
-                    success = true
-                    m.react(done)
-                    return
-                }
-            }
-        } catch (cobaltErr) {
-            console.error('TikTok Cobalt DL failed:', cobaltErr.message)
-        }
-
-        // Motor 2: fg-senna (API externa)
+        // Motor 1: fg-senna (API Direta e Rápida)
         let data = null
-        if (!success) {
-            try {
-                data = await fg.tiktok(args[0])
-            } catch (e) {
-                console.error('TikTok fg.tiktok failed:', e.message)
-            }
+        try {
+            data = await fg.tiktok(args[0])
+        } catch (e) {
+            console.error('TikTok fg.tiktok failed:', e.message)
         }
 
         if (data && data.result) {

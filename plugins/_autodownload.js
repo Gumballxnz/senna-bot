@@ -35,32 +35,8 @@ export async function before(m, { conn, isOwner }) {
         found = true
         m.react(rwait)
         try {
-            let success = false
-            
-            // Tentativa 1: Cobalt API (Principal - Evita bloqueio)
+            // Tentativa 1: fg-senna (Direto e Rápido)
             try {
-                const { downloadCobalt } = await import('../lib/ytHelper.js')
-                let cobaltRes = await downloadCobalt(link)
-                if (cobaltRes) {
-                    if (cobaltRes.isPicker) {
-                        for (let url of cobaltRes.items) {
-                            await conn.sendFile(m.chat, url, 'tiktok.png', '', m, null, fwc)
-                        }
-                        success = true
-                        m.react(done)
-                    } else if (fs.existsSync(cobaltRes.filePath)) {
-                        await conn.sendFile(m.chat, cobaltRes.filePath, 'tiktok.mp4', `✅ *Auto DL: TikTok (Cobalt)*`, m, null, fwc)
-                        if (fs.existsSync(cobaltRes.filePath)) fs.unlinkSync(cobaltRes.filePath)
-                        success = true
-                        m.react(done)
-                    }
-                }
-            } catch (ee) {
-                console.error('Cobalt TikTok failed, falling back to fg-senna...')
-            }
-
-            // Tentativa 2: fg-senna
-            if (!success) {
                 let data = await fg.tiktok(link)
                 if (data && data.result && data.result.images) {
                     for (let img of data.result.images) {
@@ -73,6 +49,8 @@ export async function before(m, { conn, isOwner }) {
                     success = true
                     m.react(done)
                 }
+            } catch (ee) {
+                console.error('fg-senna TikTok failed:', ee.message)
             }
 
             // Tentativa 3: Local yt-dlp
