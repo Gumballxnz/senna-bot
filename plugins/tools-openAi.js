@@ -23,7 +23,7 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
   }
 
 }
-handler.help = ['ai <text>', "resetai <elimina memoria gpt>"]
+handler.help = ['ia <texto>', 'ai <texto>', 'resetai']
 handler.tags = ['tools']
 handler.command = ["ia","ai", "resetai", "gpt", "openai", "dylux"]
 

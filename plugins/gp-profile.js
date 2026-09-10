@@ -33,7 +33,7 @@ let str = `
     m.react(done)
 
 }
-handler.help = ['profile']
+handler.help = ['perfil', 'profile']
 handler.tags = ['group']
 handler.command = ['profile', 'perfil']
 

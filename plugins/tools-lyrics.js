@@ -15,7 +15,7 @@ let handler = async (m, {conn, text }) => {
 } 
 
 }
-handler.help = ['lyrics']
+handler.help = ['letra <música>', 'lyrics <música>']
 handler.tags = ['tools']
 handler.command = ['letra', 'lyrics', 'letras'] 
 

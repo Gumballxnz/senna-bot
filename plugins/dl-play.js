@@ -91,7 +91,7 @@ Responda com 1 ou 2:
     confirmation[chatKey] = confData
 }
 
-handler.help = ['play']
+handler.help = ['play <música>', 'playvid <vídeo>']
 handler.tags = ['dl']
 handler.command = ['play','playvid']
 

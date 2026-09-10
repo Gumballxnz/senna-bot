@@ -11,8 +11,8 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
     m.react('🤤')
   
 }
-handler.help = ['tvid']
-handler.tags = ['img']
+handler.help = ['pack', 'cosplay']
+handler.tags = ['nsfw']
 handler.command = ['pack', 'cosplay']
 handler.premium = false
 handler.diamond = true

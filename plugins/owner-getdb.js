@@ -62,6 +62,8 @@ let handler = async (m, { conn }) => {
   }
 }
 
+handler.help = ['getdb']
+handler.tags = ['owner']
 handler.command = ['getdb']
 handler.rowner = true
 

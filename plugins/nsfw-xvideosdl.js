@@ -36,7 +36,7 @@ let handler = async (m, {conn, text, usedPrefix, command }) => {
     }
 
 }
-handler.help = ['xvideos'] 
+handler.help = ['xvideos <busca|link>', 'xvideodl <link>'] 
 handler.tags = ['nsfw', 'prem']
 handler.command = ['xvideossearch', 'xvideo', 'xvideos', 'xvideodl'] 
 //handler.diamond = 5

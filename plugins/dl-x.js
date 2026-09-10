@@ -104,7 +104,7 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
         m.reply("❎ Erro ao baixar Twitter.")
     }
 }
-handler.help = ['twitter'].map(v => v + ' <url>')
+handler.help = ['twitter <url>', 'x <url>']
 handler.tags = ['dl']
 handler.command = ['twitter', 'tw', 'x']
 handler.diamond = true

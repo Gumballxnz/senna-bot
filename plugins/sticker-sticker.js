@@ -72,7 +72,7 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
     else throw `A conversão falhou, tente responder a uma imagem/vídeo com *${usedPrefix + command}*`
   }
 }
-handler.help = ['sticker']
+handler.help = ['s', 'sticker']
 handler.tags = ['sticker']
 handler.command = ['s', 'sticker'] 
 

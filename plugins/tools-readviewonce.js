@@ -36,7 +36,7 @@ let handler = async (m, { conn }) => {
         m.reply('✳️ Responda a uma mensagem de visualização única (View Once).')
     }
 }
-handler.help = ['readvo']
+handler.help = ['ver', 'readvo', 'rvo']
 handler.tags = ['tools']
 handler.command = ['readviewonce', 'read', 'ver', 'readvo', 'rvo'] 
 

@@ -121,7 +121,7 @@ let handler = async (m, { conn, text, args, usedPrefix, command }) => {
     m.react(done)
   }
 }
-handler.help = ['instagram'].map(v => v + ' <url>')
+handler.help = ['igdl <url>', 'instagram <url>']
 handler.tags = ['dl']
 handler.command = ['igdl', "instagramdl", "instagram"]
 handler.diamond = true

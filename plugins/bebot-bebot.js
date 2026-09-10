@@ -258,7 +258,7 @@ startBot()
 
 }
 
-handler.help = ["botclone"]
+handler.help = ["jadibot", "botclone", "serbot"]
 handler.tags = ["bebot"]
 handler.command = ["bebot", "serbot", "jadibot", "botclone", "clonebot"]
 

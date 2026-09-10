@@ -15,7 +15,7 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
     m.react('🤓')
   
 }
-handler.help = ['tvid']
+handler.help = ['video', 'asupan']
 handler.tags = ['img']
 handler.command = ['asupan', 'tvid', 'videos', 'vid', 'video']
 handler.premium = false
