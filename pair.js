@@ -16,28 +16,34 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const authFolder = path.join(__dirname, 'sessions')
 const phoneNumber = '258871828596'
 
-// Limpar sessão antiga
-if (process.argv.includes('--clean')) {
+function cleanAuth() {
     try {
-        fs.rmSync(authFolder, { recursive: true, force: true })
-        console.log('🧹 Pasta de sessões limpa com sucesso.')
+        if (fs.existsSync(authFolder)) {
+            const files = fs.readdirSync(authFolder)
+            for (const file of files) {
+                fs.unlinkSync(path.join(authFolder, file))
+            }
+        } else {
+            fs.mkdirSync(authFolder, { recursive: true })
+        }
     } catch (e) {}
 }
 
-if (!fs.existsSync(authFolder)) {
-    fs.mkdirSync(authFolder, { recursive: true })
-}
+cleanAuth()
 
-let pairingCodeRequested = false
+let isConnected = false
+let isPairingCompleted = false
 
-async function connect() {
+async function startPairingLoop() {
+    if (isConnected) return
+
     const { state, saveCreds } = await useMultiFileAuthState(authFolder)
     const { version } = await fetchLatestBaileysVersion()
 
     const sock = makeWASocket({
         logger: pino({ level: 'silent' }),
         version,
-        browser: ['Chrome (Linux)', 'Chrome', '120.0.6099.199'],
+        browser: Browsers.ubuntu('Chrome'),
         auth: {
             creds: state.creds,
             keys: makeCacheableSignalKeyStore(state.keys, pino({ level: 'fatal' }))
@@ -45,7 +51,7 @@ async function connect() {
         markOnlineOnConnect: true,
         generateHighQualityLinkPreview: false,
         syncFullHistory: false,
-        defaultQueryTimeoutMs: 300000,
+        defaultQueryTimeoutMs: 120000,
         connectTimeoutMs: 60000
     })
 
@@ -54,39 +60,43 @@ async function connect() {
     sock.ev.on('connection.update', async (update) => {
         const { connection, lastDisconnect, qr } = update
 
-        if (qr) {
+        if (qr && !isPairingCompleted) {
             try {
                 await qrcode.toFile(path.join(__dirname, 'qr.png'), qr)
+                await qrcode.toFile('C:\\Users\\USER\\.gemini\\antigravity\\brain\\5f8c69e8-5198-4817-8283-67e46ea95e28\\qr_code.png', qr)
             } catch (e) {}
         }
 
         if (connection === 'close') {
             const statusCode = lastDisconnect?.error?.output?.statusCode
-            console.log(`📡 Conexão encerrada com status ${statusCode}`)
-            if (statusCode !== DisconnectReason.loggedOut && statusCode !== 403 && statusCode !== 401) {
-                console.log('Reconectando para sincronizar chaves...')
-                setTimeout(connect, 2000)
-            } else {
-                console.log('❌ Sessão rejeitada ou deslogada.')
-                process.exit(1)
+            if (!isConnected) {
+                if (statusCode === 515) {
+                    isPairingCompleted = true
+                    console.log('\n🔄 WhatsApp confirmou o pareamento! Finalizando chaves de criptografia...')
+                    setTimeout(startPairingLoop, 1500)
+                } else {
+                    console.log(`\n⏳ Conexão reiniciada (${statusCode || 'timeout'}). Atualizando código...`)
+                    if (!isPairingCompleted) cleanAuth()
+                    setTimeout(startPairingLoop, 2000)
+                }
             }
         }
 
         if (connection === 'open') {
-            console.log('\n========================================')
-            console.log('🎉 BOT CONECTADO COM SUCESSO AO WHATSAPP!')
-            console.log('⏳ Sincronizando chaves de autenticação...')
-            console.log('========================================\n')
-            
+            isConnected = true
+            console.log('\n==================================================')
+            console.log('🎉 BOT CONECTADO LOCALMENTE COM SUCESSO AO WHATSAPP!')
+            console.log('⏳ Gravando chaves de segurança no disco...')
+            console.log('==================================================\n')
+
             setTimeout(() => {
-                console.log('✅ Sessão salva no disco com sucesso!')
+                console.log('✅ Sessão 100% gravada em ./sessions!')
                 process.exit(0)
-            }, 6000)
+            }, 10000)
         }
     })
 
-    if (!sock.authState.creds.registered && !pairingCodeRequested) {
-        pairingCodeRequested = true
+    if (!sock.authState.creds.registered && !isPairingCompleted) {
         setTimeout(async () => {
             try {
                 let code = await sock.requestPairingCode(phoneNumber)
@@ -95,11 +105,9 @@ async function connect() {
                 console.log(`📱 NÚMERO: +${phoneNumber}`)
                 console.log(`🔑 CÓDIGO DE PAREAMENTO: ${code}`)
                 console.log('========================================\n')
-            } catch (err) {
-                console.error('Erro ao gerar código:', err.message)
-            }
+            } catch (err) {}
         }, 3000)
     }
 }
 
-connect()
+startPairingLoop()

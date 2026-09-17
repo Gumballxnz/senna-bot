@@ -1,11 +1,10 @@
-
 let handler = async (m, { conn, usedPrefix, command, args }) => {
-  
+
   m.reply(`
 ┌───⊷ *TIANDA* ⊶
 ▢ _01_ - Diamante = 200🪙
 ▢ _02_ - Premiun =  1h 50💎  (1d 800💎)
-└────────────── 
+└──────────────
 
 Puedes comprar usando *${usedPrefix}buy* <ID> <monto>
 
@@ -16,6 +15,6 @@ Puedes comprar usando *${usedPrefix}buy* <ID> <monto>
 }
 handler.help = ['shop']
 handler.tags = ['econ']
-handler.command = ['shop', 'tienda'] 
+handler.command = ['shop', 'tienda']
 
 export default handler

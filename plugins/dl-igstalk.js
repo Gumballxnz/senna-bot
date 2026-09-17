@@ -1,14 +1,13 @@
-
 import fetch from 'node-fetch'
 let handler= async (m, { conn, args, text, usedPrefix, command }) => {
-	
-    if (!args[0]) throw `📌Exemplo : ${usedPrefix + command} Gumball.xnz` 
+
+    if (!args[0]) throw `📌Exemplo : ${usedPrefix + command} Gumball.xnz`
     try {
     let pon = await fetch(global.API('fgmods', '/api/search/igstalk', { username: args[0] }, 'apikey'))
     let res = await pon.json()
     let te = `
-┌──「 *STALKING* 
-▢ *🔖Nombre:* ${res.result.name} 
+┌──「 *STALKING*
+▢ *🔖Nombre:* ${res.result.name}
 ▢ *🔖Usuario:* ${res.result.username}
 ▢ *👥Seguidores:* ${res.result.followers}
 ▢ *🫂Siguiendo:* ${res.result.following}
@@ -21,10 +20,10 @@ let handler= async (m, { conn, args, text, usedPrefix, command }) => {
     } catch {
         m.reply(`✳️ Erro`)
       }
-     
+
 }
 handler.help = ['igstalk']
 handler.tags = ['dl']
-handler.command = ['igstalk'] 
+handler.command = ['igstalk']
 
 export default handler

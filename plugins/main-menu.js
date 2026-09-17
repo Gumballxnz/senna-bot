@@ -11,21 +11,21 @@ let tags = {
   'img': 'IMAGEN',
   'prem': 'PREMIUM',
   'group': 'GRUPO',
-  'nable': 'EN/DISABLE OPCIONES', 
+  'nable': 'EN/DISABLE OPCIONES',
   'nime': 'ANIME',
   'dl': 'DESCARGAS',
   'tools': 'TOOLS',
   'fun': 'FUN',
   'cmd': 'DATABASE',
   'nsfw': 'NSFW +18',
-  'ansfw': 'NSFW ANIME', 
-  'owner': 'OWNER', 
+  'ansfw': 'NSFW ANIME',
+  'owner': 'OWNER',
   'advanced': 'AVANÇADO',
 }
 const defaultMenu = {
   before: `
 ◈ ━━━━━ *DYLUX BOT S2* ━━━━━ ◈
- 
+
 👋🏻 Olá! *%name*
 👥 Usuários : %totalreg
 🟢 Tempo ativo : %muptime
@@ -51,7 +51,7 @@ let handler = async (m, { conn, usedPrefix: _p, __dirname }) => {
     let { exp, diamond, level, role } = global.db.data.users[m.sender]
     let { min, xp, max } = xpRange(level, global.multiplier)
     let name = await conn.getName(m.sender)
-    
+
     let _uptime = process.uptime() * 1000
     let _muptime
     if (process.send) {
@@ -107,7 +107,7 @@ let handler = async (m, { conn, usedPrefix: _p, __dirname }) => {
       '%': '%',
       p: _p, uptime, muptime,
       me: await conn.getName(conn.user.jid),
-      sbot: (conn.user.jid == global.conn.user.jid ? '' : `\n▢ ✨ *Sub-Bot de:*\nwa.me/${global.conn.user.jid.split`@`[0]}`), 
+      sbot: (conn.user.jid == global.conn.user.jid ? '' : `\n▢ ✨ *Sub-Bot de:*\nwa.me/${global.conn.user.jid.split`@`[0]}`),
       npmname: _package.name,
       npmdesc: _package.description,
       version: _package.version,
@@ -120,26 +120,20 @@ let handler = async (m, { conn, usedPrefix: _p, __dirname }) => {
       readmore: readMore
     }
     text = text.replace(new RegExp(`%(${Object.keys(replace).sort((a, b) => b.length - a.length).join`|`})`, 'g'), (_, name) => '' + replace[name])
-    
+
     let pp = './src/fg_logo.jpg'
 
-    /*conn.sendButton(m.chat, text.trim(), `▢ DyLux  ┃ ᴮᴼᵀ\n${mssg.ig}`, pp, [
-      ['ꨄ︎ Apoyar', `${_p}donate`],
-      ['⏍ Info', `${_p}botinfo`],
-      ['⌬ Grupos', `${_p}gpdylux`]
-    ], m, rpl)*/
     conn.sendFile(m.chat, pp, 'menu.jpg', text.trim(), m, null, fwc)
-  
-    m.react('📚') 
-    
+
+    m.react('📚')
+
   } catch (e) {
     conn.reply(m.chat, '❎ Desculpe, o menu encontrou um erro', m)
     throw e
   }
 }
-//handler.help = ['help']
-//handler.tags = ['main']
-handler.command = ['menu', 'help', 'menú'] 
+
+handler.command = ['menu', 'help', 'menú']
 handler.register = false
 
 export default handler

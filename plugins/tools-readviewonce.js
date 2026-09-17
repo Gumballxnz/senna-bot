@@ -1,4 +1,3 @@
-
 import { downloadContentFromMessage } from '@whiskeysockets/baileys'
 
 let handler = async (m, { conn }) => {
@@ -7,13 +6,13 @@ let handler = async (m, { conn }) => {
         let media = await q.download?.().catch(() => null)
 
         if (!media || media.length === 0) {
-            let viewOnceMsg = q.msg?.message?.imageMessage || 
-                              q.msg?.message?.videoMessage || 
-                              q.message?.imageMessage || 
-                              q.message?.videoMessage || 
+            let viewOnceMsg = q.msg?.message?.imageMessage ||
+                              q.msg?.message?.videoMessage ||
+                              q.message?.imageMessage ||
+                              q.message?.videoMessage ||
                               (q.msg && (q.msg.imageMessage || q.msg.videoMessage)) ||
                               q.msg || q
-            
+
             let mime = viewOnceMsg.mimetype || q.mimetype || q.mediaType || ''
             if (viewOnceMsg?.mediaKey) {
                 const type = /image/g.test(mime) ? 'image' : /video/g.test(mime) ? 'video' : 'audio'
@@ -38,6 +37,6 @@ let handler = async (m, { conn }) => {
 }
 handler.help = ['ver', 'readvo', 'rvo']
 handler.tags = ['tools']
-handler.command = ['readviewonce', 'read', 'ver', 'readvo', 'rvo'] 
+handler.command = ['readviewonce', 'read', 'ver', 'readvo', 'rvo']
 
 export default handler

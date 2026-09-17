@@ -1,4 +1,3 @@
-
 import fg from 'fg-senna'
 import fs from 'fs'
 import path from 'path'
@@ -13,7 +12,6 @@ let handler = async (m, { conn, text, args, usedPrefix, command }) => {
 
   let success = false
 
-  // Motor 1: fg-senna (Direto, Rápido, Buffer nativo)
   try {
     let data = await fg.igdl(args[0])
     if (data) {
@@ -63,7 +61,6 @@ let handler = async (m, { conn, text, args, usedPrefix, command }) => {
     console.error('❌ [IGDL] fg-senna falhou:', e.message)
   }
 
-  // Motor 3: yt-dlp local (Alta Qualidade como fallback)
   const TEMP_DIR = path.join(process.cwd(), 'tmp')
   if (!fs.existsSync(TEMP_DIR)) fs.mkdirSync(TEMP_DIR, { recursive: true })
   const rawPath = path.join(TEMP_DIR, `ig_raw_${Date.now()}.mp4`)
@@ -90,7 +87,6 @@ let handler = async (m, { conn, text, args, usedPrefix, command }) => {
     try { if (fs.existsSync(finalPath)) fs.unlinkSync(finalPath) } catch(e) {}
   }
 
-  // Motor 4: APIs de fallback externas
   if (!success) {
     const fetch = (await import('node-fetch')).default
     const encodedUrl = encodeURIComponent(args[0])

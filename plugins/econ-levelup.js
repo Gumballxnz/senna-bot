@@ -9,7 +9,6 @@ let handler = async (m, { conn }) => {
 
   let user = global.db.data.users[m.sender]
 
-  // ───── SI NO PUEDE SUBIR NIVEL ─────
   if (!canLevelUp(user.level, user.exp, global.multiplier)) {
 
     let { min, xp, max } = xpRange(user.level, global.multiplier)
@@ -37,19 +36,17 @@ let handler = async (m, { conn }) => {
         background: 'https://i.ibb.co/CsNgBYw/qiyana.jpg'
       }, 'apikey')
 
-      // 🔎 Verificamos que la API esté viva
       let check = await fetch(imgg)
       if (!check.ok) throw "API caída"
 
       await conn.sendFile(m.chat, imgg, 'level.jpg', txt, m)
 
     } catch (e) {
-     // await m.reply(txt) 
+
       await conn.sendFile(m.chat, pp, 'level.jpg', txt, m)
     }
   }
 
-  // ───── SI PUEDE SUBIR NIVEL ─────
   let before = user.level * 1
 
   while (canLevelUp(user.level, user.exp, global.multiplier))
@@ -69,8 +66,8 @@ let handler = async (m, { conn }) => {
 
     try {
 
-      let img = API('fgmods', '/api/maker/levelup', { 
-        avatar: pp 
+      let img = API('fgmods', '/api/maker/levelup', {
+        avatar: pp
       }, 'apikey')
 
       let check = await fetch(img)

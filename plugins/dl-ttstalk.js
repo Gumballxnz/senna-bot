@@ -9,7 +9,7 @@ let handler = async (m, { conn, text }) => {
     let res = await fg.ttstalk(text)
 
     let txt = `
-┌──「 *TIKTOK STALK* 
+┌──「 *TIKTOK STALK*
 ▢ *🔖Nombre:* ${res.name}
 ▢ *🔖Usuario:* ${res.username}
 ▢ *👥Seguidores:* ${res.followers}

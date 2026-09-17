@@ -1,12 +1,11 @@
-
-import fg from 'fg-senna' 
-let free = 1000 // limite de descarga
+import fg from 'fg-senna'
+let free = 1000
 let prem = 3000
 let handler = async (m, { conn, args, usedPrefix, command, isOwner, isPrems }) => {
 
 	if (!args[0]) throw `✳️ Insira un link`
-	m.react(rwait) 
-	
+	m.react(rwait)
+
 	try {
 	let res = await fg.gdrive(args[0])
 
@@ -17,19 +16,18 @@ let handler = async (m, { conn, args, usedPrefix, command, isOwner, isPrems }) =
 
 *📌Nombre:* ${res.fileName}
 *⚖️Tamaño:* ${res.fileSize}
-${isLimit ? `\n▢ El archivo supera el límite de descarga *+${free} MB* Pásate a premium para poder descargar archivos de hasta *${prem} MB*` : ''} 
+${isLimit ? `\n▢ El archivo supera el límite de descarga *+${free} MB* Pásate a premium para poder descargar archivos de hasta *${prem} MB*` : ''}
 `)
-		
+
 	if(!isLimit) conn.sendMessage(m.chat, { document: { url: res.downloadUrl }, fileName: res.fileName, mimetype: res.mimetype }, { quoted: m })
 	m.react(done)
    } catch {
-	m.reply("error") 
+	m.reply("error")
   }
 }
 handler.help = ['gdrive']
 handler.tags = ['dl', 'prem']
 handler.command = ['gdrive']
 handler.diamond = true
-//handler.premium = true
 
 export default handler

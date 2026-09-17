@@ -1,4 +1,3 @@
-
 import { downloadYT, getYTInfo } from '../lib/ytHelper.js'
 import fs from 'fs'
 
@@ -13,11 +12,10 @@ let handler = async (m, { conn, args, usedPrefix, command, isPrems, isOwner }) =
     m.react(rwait)
 
     try {
-        // Obter informações do vídeo
+
         let info = await getYTInfo(args[0]).catch(() => ({ title: 'video' }))
         let title = info.title || 'video'
-        
-        // Baixar usando yt-dlp
+
         let { filePath, size } = await downloadYT(args[0], 'video')
 
         if (!fs.existsSync(filePath)) throw new Error('Falha ao baixar o arquivo')
@@ -40,7 +38,6 @@ let handler = async (m, { conn, args, usedPrefix, command, isPrems, isOwner }) =
             { asDocument: chat?.useDocument }
         )
 
-        // Limpar arquivo temporário após o envio
         fs.unlinkSync(filePath)
         m.react(done)
 

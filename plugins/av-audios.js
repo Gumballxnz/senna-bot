@@ -1,10 +1,9 @@
-
 let handler = m => m
 handler.all = async function (m) {
   for (const message in audioMsg) {
     if (new RegExp(`^${message}$`, 'i').test(m.text)) {
      this.sendFile(m.chat, audioMsg[message], 'audio.mp3', null, m, false)
-       //this.sendFile(m.chat, audioMsg[message], 'audio.ogg', '', m, true, { asAudio: true, ptt: true})
+
      break
     }
   }
@@ -12,7 +11,6 @@ handler.all = async function (m) {
  }
 
 export default handler
-
 
 let audioMsg = {
   'fino señores': './src/mp3/fino.mp3',

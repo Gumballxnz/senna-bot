@@ -1,4 +1,3 @@
-
 let cooldown = 14400000
 let handler = async (m, { conn }) => {
 
@@ -12,7 +11,7 @@ let handler = async (m, { conn }) => {
 }
 handler.help = ['mine']
 handler.tags = ['econ']
-handler.command = ['minar', 'miming', 'mine'] 
+handler.command = ['minar', 'miming', 'mine']
 
 export default handler
 

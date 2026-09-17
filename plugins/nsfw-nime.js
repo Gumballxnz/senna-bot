@@ -1,25 +1,23 @@
-
 import fetch from 'node-fetch'
 import axios from 'axios'
 let handler = async (m, { conn, usedPrefix, command }) => {
-	
+
 	if (!global.db.data.chats[m.chat].nsfw) throw `🚫 El grupo no admite contenido nsfw\nUsa este grupo\n${fg_gpnsfw}\n\nSi eres admin habilita con\n*${usedPrefix}enable* nsfw`
    let user = global.db.data.users[m.sender].age
    if (user < 17) throw `❎ Eres menor de edad! vuelve cuando tengas mas de 18`
-   
+
    m.react(rwait)
 let type = (command).toLowerCase()
 switch (type) {
-	
-	//-- nsfw tipo anime
+
 	case 'xwaifu':
         let xwai = await fetch(`https://api.waifu.pics/nsfw/waifu`)
         if (!xwai.ok) throw await xwai.text()
         let xwfu = await xwai.json()
         if (!xwfu.url) throw '❎ Erro'
         conn.sendFile(m.chat, xwfu.url, 'img.jpg', `Random *${command}*`, m, null, fwc)
-        //conn.sendButton(m.chat, `✅ ${mssg.random} *${command}*`, fgyt, xwfu.url, [[`▷▷ ${msg.next()}`, `${usedPrefix + command}`]], m)
-       m.react(xmoji)    
+
+       m.react(xmoji)
   break
 
 case 'blowjob':
@@ -29,7 +27,7 @@ case 'trap':
     let json = await res.json()
     if (!json.url) throw '❎ Erro'
     conn.sendFile(m.chat, json.url, 'img.jpg', `✅ Random} *${command}*`, m, null, fwc)
-    m.react(xmoji) 
+    m.react(xmoji)
 break
 
 case 'yuri':
@@ -37,14 +35,14 @@ case 'cum':
 case 'xneko':
     let as = await conn.getFile(global.API('fgmods', `/api/nsfw-nime/${command}`, { }, 'apikey'))
     conn.sendFile(m.chat, as.data, 'img.jpg', `✅ Random *${command}*`, m, null, fwc)
-    m.react(xmoji) 
+    m.react(xmoji)
 break
 
 case 'hentai':
     let he = pickRandom(['yuri', 'cum', 'xneko', 'blowjob', 'ass', 'pussy', 'hentai-mp4'])
     let les = await conn.getFile(global.API('fgmods', `/api/nsfw-nime/${he}`, { }, 'apikey'))
     conn.sendFile(m.chat, les.data, 'img.jpg', `✅ Random *${command}*`, m, null, fwc)
-   m.react(xmoji) 
+   m.react(xmoji)
 break
 
 default:

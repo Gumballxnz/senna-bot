@@ -1,4 +1,3 @@
-
 import speed from 'performance-now'
 let handler = async (m, { conn, usedPrefix, command }) => {
     let start = speed()
@@ -14,11 +13,11 @@ let handler = async (m, { conn, usedPrefix, command }) => {
  ≡ *ESTADO*
 - *Ping:* ${latency} _ms_
 - *Uptime:* ${uptime}
-- *Comandos:* ${cmds} 
+- *Comandos:* ${cmds}
 
 *≡ USUÁRIOS DO BOT*
 - *Total:* ${totalreg.length.toLocaleString()}
-- *Registrados:* ${rtotalreg.length.toLocaleString()} 
+- *Registrados:* ${rtotalreg.length.toLocaleString()}
 
 *≡ OWNER*
   *🇯🇵𝙶𝙷𝙾𝚂𝚃 𝙶𝚄𝙼𝙱𝙰𝙻𝙻 ╰⁔╯*
@@ -37,7 +36,6 @@ handler.command = ['info', 'infobot', 'botinfo']
 
 export default handler
 
-// - - 
 async function getUptime() {
     if (process.send) {
         process.send('uptime')
@@ -50,7 +48,6 @@ async function getUptime() {
     return formatUptime(0)
 }
 
-// - - 
 function formatUptime(ms) {
     let d = Math.floor(ms / 86400000)
     let h = Math.floor(ms / 3600000) % 24

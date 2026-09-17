@@ -1,4 +1,3 @@
-
 let handler = async (m, { conn, usedPrefix, command, args: [event], text }) => {
 
   let chat = global.db.data.chats[m.chat]
@@ -10,12 +9,12 @@ let handler = async (m, { conn, usedPrefix, command, args: [event], text }) => {
   ▢ promote
   ▢ demote
   └───────────
-  
+
   📌 Exemplo :
-  
+
   *${usedPrefix + command}* welcome @user`
 
-if (!event) return await m.reply(te) 
+if (!event) return await m.reply(te)
 
 let mentions = text.replace(event, '').trimStart()
 let who = mentions ? conn.parseMention(mentions) : []
@@ -28,7 +27,7 @@ switch (event.toLowerCase()) {
         case 'invite':
         case 'welcome':
            act = 'add'
-         break 
+         break
         case 'bye':
         case 'despedida':
         case 'leave':
@@ -58,7 +57,7 @@ action: act
 }
 handler.help = ['simulate <event> @user']
 handler.tags = ['group']
-handler.command = ['simular', 'simulate'] 
+handler.command = ['simular', 'simulate']
 handler.admin = true
 handler.group = true
 

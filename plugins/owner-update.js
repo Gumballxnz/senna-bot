@@ -19,7 +19,6 @@ let handler = async (m, { conn, text }) => {
 
     await conn.reply(m.chat, `📦 *Git Update*\n\n${result}`, m)
 
-    // recargar plugins si existe el sistema
     if (global.reload) {
       global.reload()
     }

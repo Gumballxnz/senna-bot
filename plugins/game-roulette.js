@@ -42,7 +42,7 @@ let handler = async (m, { usedPrefix, command, args }) => {
   const color = RED_NUMBERS.includes(result) ? "rojo" : "negro"
 
   m.reply(`🎲 Apostaste *${amount} coins* en *${space}*\n\n⏳ Girando ruleta...`)
- 
+
   betData[id] = Date.now()
 
   await new Promise(r => setTimeout(r, 10000))
@@ -70,7 +70,6 @@ handler.tags = ['game']
 handler.command = ['roulette','ruleta']
 
 export default handler
-
 
 function getMultiplier(space, result){
 

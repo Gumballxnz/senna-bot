@@ -1,14 +1,13 @@
-
 import axios from 'axios'
 
 let handler = async (m, { conn }) => {
     m.react('⏳')
-    
+
     try {
-        // Usaremos um arquivo de teste do Cloudflare/DigitalOcean que é estável
-        const testUrl = 'https://speed.cloudflare.com/__down?bytes=15000000' // ~15MB
+
+        const testUrl = 'https://speed.cloudflare.com/__down?bytes=15000000'
         const start = Date.now()
-        
+
         const response = await axios({
             url: testUrl,
             method: 'GET',
@@ -32,7 +31,7 @@ let handler = async (m, { conn }) => {
         const speedMbps = megaBits / durationSeconds
 
         m.react('🚀')
-        
+
         let txt = `*≡ SPEEDTEST (Cloudflare Engine)*\n\n`
         txt += `▢ *Velocidade:* ${speedMbps.toFixed(2)} Mbps\n`
         txt += `▢ *Servidor:* Cloudflare Edge\n`

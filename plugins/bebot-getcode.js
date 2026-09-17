@@ -3,8 +3,6 @@ import path from "path"
 
 let handler = async (m, { conn, usedPrefix }) => {
 
-    //if (global.conn.user.jid == conn.user.jid) conn.reply(m.chat, `✳️ este comando é apenas para *Sub Bots Activos*`, m)
-    
     let basePath = "./bebots"
 
     if (!fs.existsSync(basePath)) {
@@ -31,13 +29,12 @@ let handler = async (m, { conn, usedPrefix }) => {
 
             if (botNumber === senderNumber) {
 
-                //--obtener fecha de modificación
                 let stat = fs.statSync(folderPath)
 
                 carpt.push({
                     id: folder,
                     number: botNumber,
-                    time: stat.mtimeMs // fecha en ms
+                    time: stat.mtimeMs
                 })
             }
 
@@ -50,7 +47,6 @@ let handler = async (m, { conn, usedPrefix }) => {
         return conn.reply(m.chat, `✳️ Aun no eres Sub-Bot\n\n Usa: ${usedPrefix}botclone`, m)
     }
 
-    //--más reciente
     carpt.sort((a, b) => b.time - a.time)
 
     let act = carpt[0]
@@ -70,6 +66,5 @@ let handler = async (m, { conn, usedPrefix }) => {
 handler.help = ['getcode']
 handler.tags = ['bebot']
 handler.command = ['getcode', "code"]
-//handler.owner = true
 
 export default handler

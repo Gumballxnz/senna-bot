@@ -90,7 +90,6 @@ return ""
 
 let conn = makeWASocket(connectionOptions)
 
-
 if (methodCode && !conn.authState.creds.registered) {
 
 if (!phoneNumber) return
@@ -163,11 +162,8 @@ text: "⛔ La conexión se cerró, tendrás que reconectarte Enviando o ID"
 
 if (connection === "open") {
 
-
 conn.isInit = true
 global.conns.push(conn)
-
-//-- Log 
 
 let logMsg = `
 ┌─⊷ 🤖 *SUB-BOT CONECTADO*
@@ -175,7 +171,7 @@ let logMsg = `
 ▢ 🕒 Hora: ${new Date().toLocaleString("pt-MZ", { timeZone: "Africa/Maputo" })}
 └──────────────
 `
-//await parent.sendMessage(canal_logid, { text: logMsg })
+
 await parent.reply(canal_logid, logMsg, m, fwc)
 
 await parent.sendMessage(m.chat, {
@@ -228,7 +224,7 @@ conn.ev.off("creds.update", conn.credsUpdate)
 
 }
 
-conn.welcome = global.conn?.welcome || "" 
+conn.welcome = global.conn?.welcome || ""
 conn.bye = global.conn?.bye || ""
 conn.spromote = global.conn?.spromote || ""
 conn.sdemote = global.conn?.sdemote || ""

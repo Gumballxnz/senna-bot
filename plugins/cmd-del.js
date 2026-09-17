@@ -1,4 +1,3 @@
-
 let handler = async (m, { text }) => {
     let hash = text
     if (m.quoted && m.quoted.fileSha256) hash = m.quoted.fileSha256.toString('hex')
@@ -8,7 +7,6 @@ let handler = async (m, { text }) => {
     delete sticker[hash]
     m.reply(`✅ Comando excluído`)
 }
-
 
 handler.help = ['cmd'].map(v => 'del' + v + ' <text>')
 handler.tags = ['cmd']

@@ -1,4 +1,3 @@
-
 let handler = async (m, { conn, usedPrefix, command, args, isOwner, isAdmin, isROwner }) => {
 
   let isEnable = /true|enable|(turn)?on|1/i.test(command)
@@ -9,15 +8,13 @@ let handler = async (m, { conn, usedPrefix, command, args, isOwner, isAdmin, isR
   let bot = botJid ? global.db.data.settings[botJid] : {}
   let type = (args[0] || '').toLowerCase()
 
-  // Suporte a comandos diretos como .public on/off, .self on/off, .bot on/off
   if (/^(public|publico|self|bot)$/i.test(command)) {
     type = 'public'
     isEnable = /true|enable|(turn)?on|1/i.test(args[0] || '')
   }
 
   let isAll = false, isUser = false
-  
-  // Função para verificar se já está no estado desejado
+
   const checkState = (current) => {
     if (isEnable && current) return `⚠️ *${type.toUpperCase()}* já está *Ativado* neste grupo!`
     if (!isEnable && !current) return `⚠️ *${type.toUpperCase()}* já está *Desativado* neste grupo!`
@@ -36,7 +33,7 @@ let handler = async (m, { conn, usedPrefix, command, args, isOwner, isAdmin, isR
       if (statusMsg) return m.reply(statusMsg)
       chat.welcome = isEnable
       break
-      
+
     case 'detect':
     case 'detector':
       if (m.isGroup && !isAdmin) return global.dfail('admin', m, conn)
@@ -45,12 +42,12 @@ let handler = async (m, { conn, usedPrefix, command, args, isOwner, isAdmin, isR
       if (statusMsg) return m.reply(statusMsg)
       chat.detect = isEnable
       break
-    
+
     case 'antidelete':
     case 'delete':
       if (m.isGroup && !(isAdmin || isOwner)) return global.dfail('admin', m, conn)
-      // Nota: o sistema original usa chat.delete = !isEnable para antidelete
-      statusMsg = checkState(!chat.delete) 
+
+      statusMsg = checkState(!chat.delete)
       if (statusMsg) return m.reply(statusMsg)
       chat.delete = !isEnable
       break
@@ -87,7 +84,7 @@ let handler = async (m, { conn, usedPrefix, command, args, isOwner, isAdmin, isR
       if (statusMsg) return m.reply(statusMsg)
       chat.antiLink = isEnable
       break
-      
+
     case 'captcha':
       if (m.isGroup && !(isAdmin || isOwner)) return global.dfail('admin', m, conn)
       statusMsg = checkState(chat.captcha)
@@ -101,13 +98,13 @@ let handler = async (m, { conn, usedPrefix, command, args, isOwner, isAdmin, isR
       if (statusMsg) return m.reply(statusMsg)
       chat.antiBotClone = isEnable
       break
-      
+
     case 'nsfw':
     case '+18':
       if (m.isGroup && !(isAdmin || isOwner)) return global.dfail('admin', m, conn)
       statusMsg = checkState(chat.nsfw)
       if (statusMsg) return m.reply(statusMsg)
-      chat.nsfw = isEnable          
+      chat.nsfw = isEnable
       break
 
     case 'autodl':
@@ -124,7 +121,7 @@ let handler = async (m, { conn, usedPrefix, command, args, isOwner, isAdmin, isR
       if (statusMsg) return m.reply(statusMsg.replace('neste grupo', 'para você'))
       user.autolevelup = isEnable
       break
-      
+
     case 'chatbot':
     case 'autosimi':
       isUser = true
@@ -132,7 +129,7 @@ let handler = async (m, { conn, usedPrefix, command, args, isOwner, isAdmin, isR
       if (statusMsg) return m.reply(statusMsg.replace('neste grupo', 'para você'))
       user.chatbot = isEnable
       break
-      
+
     case 'restrict':
     case 'restringir':
       isAll = true
@@ -141,7 +138,7 @@ let handler = async (m, { conn, usedPrefix, command, args, isOwner, isAdmin, isR
       if (statusMsg) return m.reply(statusMsg.replace('neste grupo', 'no bot'))
       bot.restrict = isEnable
       break
-    
+
     case 'onlypv':
       isAll = true
       if (!isOwner) return global.dfail('owner', m, conn)
@@ -149,7 +146,7 @@ let handler = async (m, { conn, usedPrefix, command, args, isOwner, isAdmin, isR
       if (statusMsg) return m.reply(statusMsg.replace('neste grupo', 'no bot'))
       bot.solopv = isEnable
       break
-      
+
     case 'sologp':
       isAll = true
       if (!isOwner) return global.dfail('owner', m, conn)
@@ -157,7 +154,7 @@ let handler = async (m, { conn, usedPrefix, command, args, isOwner, isAdmin, isR
       if (statusMsg) return m.reply(statusMsg.replace('neste grupo', 'no bot'))
       bot.sologp = isEnable
       break
-      
+
     case 'restrictgp':
     case 'aluguel':
       isAll = true
@@ -166,7 +163,7 @@ let handler = async (m, { conn, usedPrefix, command, args, isOwner, isAdmin, isR
       if (statusMsg) return m.reply(statusMsg.replace('neste grupo', 'no bot'))
       bot.restrictgp = isEnable
       break
-      
+
     default:
       if (!/[01]/.test(command)) return m.reply(`
 ≡ *LISTA DE OPÇÕES*
@@ -174,16 +171,16 @@ let handler = async (m, { conn, usedPrefix, command, args, isOwner, isAdmin, isR
 ┌─⊷ *ADMIN*
 ▢ welcome
 ▢ antilink
-▢ detect 
+▢ detect
 ▢ document
 ▢ nsfw
 ▢ antidelete
 ▢ captcha
 ▢ autodl
-└───────────── 
+└─────────────
 ┌─⊷ *USUÁRIOS*
 ▢ autolevelup
-▢ chatbot 
+▢ chatbot
 └─────────────
 ┌─⊷ *OWNER*
 ▢ antibotclone
@@ -202,7 +199,7 @@ let handler = async (m, { conn, usedPrefix, command, args, isOwner, isAdmin, isR
 
   m.reply(`
 ✅ *${type.toUpperCase()}* agora está *${isEnable ? `Ativado` : `Desativado`}* ${isAll ? `para este bot` : isUser ? 'para você' : `para este grupo`}
-`.trim(), null, fwc) 
+`.trim(), null, fwc)
 
 }
 handler.help = ['on', 'off'].map(v => v + ' <opção>')

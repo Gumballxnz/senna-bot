@@ -1,4 +1,3 @@
-
 import fg from 'fg-senna'
 import { downloadYT } from '../lib/ytHelper.js'
 import fs from 'fs'
@@ -15,8 +14,7 @@ export async function before(m, { conn, isOwner }) {
     if (!autodlAtivo) return false
 
     let text = m.text
-    // Se a mensagem começa com um prefixo de comando, ignorar AutoDL
-    // Isso evita o download duplo quando alguém usa .tiktok, .fb, etc.
+
     if (global.prefix.test(text)) return false
 
     const tiktokRegex = /https?:\/\/(www\.|v[mt]\.|vt\.)?tiktok\.com\/[^\s]*/i
@@ -30,14 +28,13 @@ export async function before(m, { conn, isOwner }) {
 
     let found = false
 
-    // TikTok (Cobalt / fg-senna)
     if (tiktokRegex.test(text)) {
         let link = text.match(tiktokRegex)[0]
         found = true
         m.react(rwait)
         try {
             let success = false
-            // Tentativa 1: fg-senna (Direto e Rápido)
+
             try {
                 let data = await fg.tiktok(link)
                 if (data && data.result && data.result.images) {
@@ -55,13 +52,12 @@ export async function before(m, { conn, isOwner }) {
                 console.error('fg-senna TikTok failed:', ee.message)
             }
 
-            // Tentativa 3: Local yt-dlp
             if (!success) {
                 const TEMP_DIR = path.join(process.cwd(), 'tmp')
                 if (!fs.existsSync(TEMP_DIR)) fs.mkdirSync(TEMP_DIR, { recursive: true })
                 const rawPath = path.join(TEMP_DIR, `tk_raw_${Date.now()}.mp4`)
                 const finalPath = path.join(TEMP_DIR, `tk_${Date.now()}.mp4`)
-                
+
                 try {
                     await execAsync(`yt-dlp -f "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best" --merge-output-format mp4 -o "${rawPath}" "${link}"`, { timeout: 120000 })
                     if (fs.existsSync(rawPath)) {
@@ -87,7 +83,6 @@ export async function before(m, { conn, isOwner }) {
         }
     }
 
-    // Instagram (Híbrido)
     if (!found && instagramRegex.test(text)) {
         let link = text.match(instagramRegex)[0]
         found = true
@@ -95,8 +90,7 @@ export async function before(m, { conn, isOwner }) {
         try {
             let data = await fg.igdl(link).catch(() => null)
             let success = false
-            
-            // Tentativa 1: fg-senna (Galeria / Mídia Única / Imagens com áudio)
+
             let mediaList = []
             if (data?.result && Array.isArray(data.result) && data.result.length > 0) {
                 mediaList = data.result.map(i => i.url || i.dl_url).filter(Boolean)
@@ -138,8 +132,7 @@ export async function before(m, { conn, isOwner }) {
                     return
                 }
             }
-            
-            // Tentativa 2: yt-dlp local (Alta Qualidade)
+
             if (!success) {
                 const TEMP_DIR = path.join(process.cwd(), 'tmp')
                 if (!fs.existsSync(TEMP_DIR)) fs.mkdirSync(TEMP_DIR, { recursive: true })
@@ -168,7 +161,6 @@ export async function before(m, { conn, isOwner }) {
                 }
             }
 
-            // Tentativa 3: APIs de Fallback
             if (!success) {
                 const fetch = (await import('node-fetch')).default;
                 let url = data?.dl_url || (data?.result && data.result[0]?.url)
@@ -206,7 +198,6 @@ export async function before(m, { conn, isOwner }) {
         }
     }
 
-    // Facebook (yt-dlp Direto)
     if (!found && facebookRegex.test(text)) {
         let link = text.match(facebookRegex)[0]
         found = true
@@ -224,11 +215,11 @@ export async function before(m, { conn, isOwner }) {
                     const { stdout } = await execAsync(`ffprobe -v error -select_streams v:0 -show_entries stream=codec_name -of default=noprint_wrappers=1:nokey=1 "${rawPath}"`)
                     if (stdout) codec = stdout.trim()
                 } catch(e){}
-                
-                let ffmpegCmd = codec === 'h264' 
+
+                let ffmpegCmd = codec === 'h264'
                     ? `ffmpeg -i "${rawPath}" -c:v copy -c:a aac -b:a 128k -movflags +faststart -y "${finalPath}"`
                     : `ffmpeg -i "${rawPath}" -c:v libx264 -preset fast -crf 28 -c:a aac -b:a 128k -movflags +faststart -y "${finalPath}"`
-    
+
                 await execAsync(ffmpegCmd, { timeout: 180000 })
                 if (fs.existsSync(rawPath)) fs.unlinkSync(rawPath)
                 if (fs.existsSync(finalPath)) {
@@ -250,7 +241,6 @@ export async function before(m, { conn, isOwner }) {
         }
     }
 
-    // Twitter/X (vxTwitter + fxTwitter + Cobalt + yt-dlp Smart Mode)
     if (!found && twitterRegex.test(text)) {
         let link = text.match(twitterRegex)[0]
         found = true
@@ -258,13 +248,12 @@ export async function before(m, { conn, isOwner }) {
         try {
             let tweetIdMatch = link.match(/\/status\/(\d+)/);
             if (!tweetIdMatch) throw new Error('Link do Twitter inválido ou sem ID do post.');
-            
+
             let id = tweetIdMatch[1];
             let directUrl = null;
             let success = false;
             const fetch = (await import('node-fetch')).default;
 
-            // Função com retry automático em caso de instabilidade na conexão Baileys (erro 428/408)
             const safeSend = async (file, fileName, cap, opts) => {
                 for (let attempt = 1; attempt <= 3; attempt++) {
                     try {
@@ -273,13 +262,12 @@ export async function before(m, { conn, isOwner }) {
                     } catch (err) {
                         console.error(`[Twitter AutoDL Send Attempt ${attempt}/3 failed]: ${err.message}`)
                         if (attempt === 3) throw err
-                        await new Promise(res => setTimeout(res, 2500)) // Espera reconexão do socket
+                        await new Promise(res => setTimeout(res, 2500))
                     }
                 }
                 return false
             }
 
-            // Camada 1: VX Twitter API
             try {
                 let vx = await fetch(`https://api.vxtwitter.com/Twitter/status/${id}`).then(v => v.json());
                 if (vx && vx.media_extended && vx.media_extended.length > 0) {
@@ -290,7 +278,6 @@ export async function before(m, { conn, isOwner }) {
                 }
             } catch(e) { }
 
-            // Camada 2: fxTwitter API
             if (!directUrl) {
                 try {
                     let fx = await fetch(`https://api.fxtwitter.com/Twitter/status/${id}`).then(v => v.json());
@@ -299,14 +286,13 @@ export async function before(m, { conn, isOwner }) {
                 } catch(e) { }
             }
 
-            // Tentar enviar directUrl (verificando tamanho via HEAD)
             if (directUrl) {
                 try {
                     const axios = (await import('axios')).default
                     let headRes = await axios.head(directUrl, { timeout: 8000 }).catch(() => null)
                     if (headRes && headRes.status === 200) {
                         let contentLength = parseInt(headRes.headers['content-length'] || '0')
-                        let isDoc = contentLength > 60 * 1024 * 1024 // Se > 60MB, enviar como Documento
+                        let isDoc = contentLength > 60 * 1024 * 1024
                         success = await safeSend(directUrl, 'twitter.mp4', `✅ *Auto DL: Twitter/X*`, isDoc ? { asDocument: true } : fwc)
                     }
                 } catch(e) {
@@ -314,7 +300,6 @@ export async function before(m, { conn, isOwner }) {
                 }
             }
 
-            // Camada 3: Cobalt API Fallback
             if (!success) {
                 try {
                     const { downloadCobalt } = await import('../lib/ytHelper.js')
@@ -335,7 +320,6 @@ export async function before(m, { conn, isOwner }) {
                 } catch(e) { }
             }
 
-            // Camada 4: yt-dlp local Fallback (para vídeos longos de até 2GB)
             if (!success) {
                 const TEMP_DIR = path.join(process.cwd(), 'tmp')
                 if (!fs.existsSync(TEMP_DIR)) fs.mkdirSync(TEMP_DIR, { recursive: true })
@@ -370,7 +354,6 @@ export async function before(m, { conn, isOwner }) {
         }
     }
 
-    // Mediafire (fg-senna)
     if (!found && mediafireRegex.test(text)) {
         let link = text.match(mediafireRegex)[0]
         found = true
@@ -390,7 +373,6 @@ export async function before(m, { conn, isOwner }) {
         }
     }
 
-    // MEGA (fg-senna)
     if (!found && megaRegex.test(text)) {
         let link = text.match(megaRegex)[0]
         found = true
@@ -408,7 +390,6 @@ export async function before(m, { conn, isOwner }) {
         }
     }
 
-    // YouTube (ytHelper + yt-dlp)
     if (!found && youtubeRegex.test(text)) {
         let link = text.match(youtubeRegex)[0]
         found = true
@@ -416,21 +397,21 @@ export async function before(m, { conn, isOwner }) {
         try {
             let { filePath, size, title } = await downloadYT(link, 'video')
             if (fs.existsSync(filePath)) {
-                // Limite de 2GB (Limite do WhatsApp Document)
+
                 if (size > 2000 * 1024 * 1024) {
                     fs.unlinkSync(filePath)
                     return m.reply('✳️ O arquivo superou o limite de 2GB do WhatsApp.')
                 }
 
                 await conn.sendFile(m.chat, filePath, `${title || 'video'}.mp4`, `✅ *Auto DL: YouTube (HD)*`, m, null, { asDocument: true })
-                
+
                 if (fs.existsSync(filePath)) fs.unlinkSync(filePath)
                 m.react(done)
             }
         } catch (e) {
             console.error('AutoDL YouTube Error:', e)
             m.react('❌')
-            // Se o erro for upload, avisar especificamente
+
             if (e.message.includes('upload')) {
                 m.reply(`❎ Erro de Transmissão: O ficheiro é muito grande ou a conexão com o WhatsApp caiu. Tente novamente.`)
             } else {
@@ -439,7 +420,6 @@ export async function before(m, { conn, isOwner }) {
         }
     }
 
-    // Pinterest (Cobalt)
     if (!found && pinterestRegex.test(text)) {
         let link = text.match(pinterestRegex)[0]
         found = true

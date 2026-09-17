@@ -4,7 +4,7 @@ let handler = async (m, { conn, usedPrefix, command }) => {
 	try {
     let q = m.quoted ? m.quoted : m
     let mime = (m.quoted ? m.quoted : m.msg).mimetype || ''
-    //if (!/video|audio/.test(mime)) throw `✳️ ${mssg.toav} :\n *${usedPrefix + command}*`
+
     let media = await q.download?.()
     if (!media) throw '❎ Erro al descargar medios'
     let audio = await toPTT(media, 'mp4')
@@ -16,6 +16,6 @@ let handler = async (m, { conn, usedPrefix, command }) => {
 }
 handler.help = ['toav']
 handler.tags = ['fun']
-handler.command = ['toav', 'tovn'] 
+handler.command = ['toav', 'tovn']
 
 export default handler

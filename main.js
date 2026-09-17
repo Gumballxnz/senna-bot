@@ -100,15 +100,14 @@ global.authFile = path.join(__dirname, 'sessions')
 if (!fs.existsSync(global.authFile)) fs.mkdirSync(global.authFile, { recursive: true })
 const {state, saveState, saveCreds} = await useMultiFileAuthState(global.authFile)
 const msgRetryCounterMap = new Map()
-const msgRetryCounterCache = new NodeCache({ stdTTL: 0, checkperiod: 0 })
-const userDevicesCache = new NodeCache({ stdTTL: 0, checkperiod: 0 })
-//const msgRetryCounterCache = new NodeCache()
+const msgRetryCounterCache = new NodeCache({ stdTTL: 1800, checkperiod: 300 })
+const userDevicesCache = new NodeCache({ stdTTL: 1800, checkperiod: 300 })
 const {version} = await fetchLatestBaileysVersion()
 
 const connectionOptions = {
     logger: pino({ level: 'silent' }),
     version,
-    browser: Browsers.windows('Desktop'),
+    browser: Browsers.ubuntu('Chrome'),
     auth: {
         creds: state.creds,
         keys: makeCacheableSignalKeyStore(
@@ -119,7 +118,7 @@ const connectionOptions = {
     markOnlineOnConnect: true,
     generateHighQualityLinkPreview: false,
     syncFullHistory: false,
-    defaultQueryTimeoutMs: 300000,
+    defaultQueryTimeoutMs: 120000,
     connectTimeoutMs: 60000,
     msgRetryCounterCache,
     userDevicesCache,
@@ -134,6 +133,26 @@ global.conn = makeWASocket(connectionOptions)
 
 store.bind(conn)
 conn.store = store
+
+setInterval(() => {
+    try {
+        if (global.conn?.messages) {
+            for (const jid in global.conn.messages) {
+                const msgs = global.conn.messages[jid]
+                const keys = Object.keys(msgs)
+                if (keys.length > 20) {
+                    const toDelete = keys.length - 20
+                    for (let i = 0; i < toDelete; i++) {
+                        delete msgs[keys[i]]
+                    }
+                }
+            }
+        }
+        if (global.gc) {
+            global.gc()
+        }
+    } catch (e) {}
+}, 15 * 60 * 1000)
 
 conn.ev.on('creds.update', saveCreds)
 

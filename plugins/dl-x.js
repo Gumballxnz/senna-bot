@@ -4,10 +4,10 @@ import fs from 'fs'
 let handler = async (m, { conn, args, usedPrefix, command }) => {
     if (!args[0]) throw `📌 Exemplo :\n*${usedPrefix + command}* https://twitter.com/fernandavasro/status/1569741835555291139?t=ADxk8P3Z3prq8USIZUqXCg&s=19`
     m.react('⏳')
-    
+
     try {
         let success = false
-        // Extrair ID do tweet 
+
         let tweetIdMatch = args[0].match(/\/status\/(\d+)/);
         let directUrl = null;
 
@@ -16,7 +16,6 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
         const fetch = (await import('node-fetch')).default;
         let id = tweetIdMatch[1];
 
-        // Função com retry automático em caso de instabilidade na conexão Baileys (erro 428/408)
         const safeSend = async (file, fileName, cap, opts) => {
             for (let attempt = 1; attempt <= 3; attempt++) {
                 try {
@@ -31,10 +30,9 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
             return false
         }
 
-        // Camada 1: VX Twitter API
         try {
             let vx = await fetch(`https://api.vxtwitter.com/Twitter/status/${id}`).then(v => v.json());
-            
+
             if (vx && vx.media_extended && vx.media_extended.length > 0) {
                 let videoMedia = vx.media_extended.find(m => m.type === 'video');
                 if (videoMedia) directUrl = videoMedia.url;
@@ -45,11 +43,10 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
             console.error('[Twitter Debug] vxTwitter falhou:', e.message)
         }
 
-        // Camada 2: fxTwitter API
         if (!directUrl) {
             try {
                 let fx = await fetch(`https://api.fxtwitter.com/Twitter/status/${id}`).then(v => v.json());
-                
+
                 let videoMedia = fx?.tweet?.media?.video;
                 if (videoMedia && videoMedia.url) { directUrl = videoMedia.url; }
             } catch(e) {
@@ -57,7 +54,6 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
             }
         }
 
-        // Tentar enviar directUrl (verificando tamanho via HEAD)
         if (directUrl) {
             try {
                 const axios = (await import('axios')).default
@@ -72,7 +68,6 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
             }
         }
 
-        // Camada 3: Cobalt API Fallback
         if (!success) {
             try {
                 const { downloadCobalt } = await import('../lib/ytHelper.js')

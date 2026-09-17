@@ -1,9 +1,8 @@
-
 let handler = async (m, { conn, text, usedPrefix, command}) => {
     function no(number){
     return number.replace(/\s/g,'').replace(/([@+-])/g,'')
   }
- 
+
     text = no(text)
   if(isNaN(text)) {
 		var number = text.split`@`[1]
@@ -21,7 +20,7 @@ let handler = async (m, { conn, text, usedPrefix, command}) => {
 			var user = m.quoted.sender
 		} else if(m.mentionedJid) {
   		  var user = number + '@s.whatsapp.net'
-			}  
+			}
 		} catch (e) {
   } finally {
     	let number = user.split('@')[0]
@@ -30,9 +29,9 @@ let handler = async (m, { conn, text, usedPrefix, command}) => {
         conn.reply(m.chat, `
 ✅ se reseteo los coins a @${number}`, m, { mentions: [user] })
     }
-    
+
 }
-handler.command = ['reset-coin'] 
+handler.command = ['reset-coin']
 handler.rowner = true
 
 export default handler

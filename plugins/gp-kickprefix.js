@@ -1,6 +1,5 @@
-
 let handler = async (m, { conn, isAdmin, isBotAdmin, args, participants, groupMetadata }) => {
-	
+
     if (!args[0] || isNaN(args[0])) return m.reply(`✳️ Ingresa el prefijo de un numero válido`)
     let prefix = args[0].replace(/[+]/g, '')
     let groupAdmins = participants.filter(p => p.admin)
@@ -18,7 +17,7 @@ let handler = async (m, { conn, isAdmin, isBotAdmin, args, participants, groupMe
                 await delay(1000)
                 await conn.groupParticipantsUpdate(m.chat, [users], 'remove')
                 await delay(10000)
-           
+
         } catch (error) {
             console.log(error)
         }

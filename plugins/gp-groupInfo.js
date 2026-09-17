@@ -1,4 +1,3 @@
-
 let handler = async (m, { conn, participants, groupMetadata }) => {
     const pp = await conn.profilePictureUrl(m.chat, 'image').catch(_ => null) || './src/avatar_contact.png'
     const { isBanned, welcome, detect, sWelcome, sBye, sPromote, sDemote, antiLink, nsfw, captcha, useDocument } = global.db.data.chats[m.chat]
@@ -8,8 +7,8 @@ let handler = async (m, { conn, participants, groupMetadata }) => {
     let text = `
 ┌──「 *INFO DE GRUPO* 」
 ▢ *♻️ID:*
-   • ${groupMetadata.id} 
-▢ *🔖Nombre:* 
+   • ${groupMetadata.id}
+▢ *🔖Nombre:*
 • ${groupMetadata.subject}
 ▢ *👥miembros:* ${participants.length}
 ▢ *🤿Dueño del grupo:*
@@ -36,7 +35,7 @@ let handler = async (m, { conn, participants, groupMetadata }) => {
 
 handler.help = ['infogp']
 handler.tags = ['group']
-handler.command = ['infogrupo', 'groupinfo', 'infogp'] 
+handler.command = ['infogrupo', 'groupinfo', 'infogp']
 handler.group = true
 
 export default handler

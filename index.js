@@ -60,7 +60,6 @@ async function start(file) {
 
   let p = fork()
 
-  // 📩 MENSAJES DEL PROCESO HIJO
   p.on('message', data => {
     console.log('[RECEIVED]', data)
 
@@ -76,7 +75,6 @@ async function start(file) {
     }
   })
 
-  // ❌ CUANDO EL PROCESO MUERE
   p.on('exit', (code) => {
     isRunning = false
 
@@ -97,7 +95,6 @@ async function start(file) {
     }
   })
 
-  // 🖥 INFO SISTEMA
   console.log(chalk.yellow(`🖥️ ${os.type()}, ${os.release()} - ${os.arch()}`))
   console.log(chalk.yellow(`💾 RAM Total: ${(os.totalmem() / 1024 / 1024 / 1024).toFixed(2)} GB`))
   console.log(chalk.yellow(`💽 RAM Libre: ${(os.freemem() / 1024 / 1024 / 1024).toFixed(2)} GB`))
@@ -125,7 +122,6 @@ async function start(file) {
 
   setInterval(() => {}, 1000)
 
-  // 📟 Consola interactiva
   let opts = new Object(yargs(process.argv.slice(2)).exitProcess(false).parse())
 
   if (!opts['test'])
@@ -134,10 +130,5 @@ async function start(file) {
         p.emit('message', line.trim())
       })
 }
-
-
-//---sub bot 
-
-///
 
 start('main.js')

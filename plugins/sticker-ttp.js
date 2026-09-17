@@ -1,11 +1,10 @@
-
 import { sticker } from '../lib/sticker.js'
 import fg from 'fg-senna'
 let handler = async (m, { conn, text, usedPrefix, command }) => {
 
-    if (!text) throw `📌 Exemplo *${usedPrefix + command}* dylux` 
-    let color = '2FFF2E' //color
-    let res = await fg.ttp(text, color) 
+    if (!text) throw `📌 Exemplo *${usedPrefix + command}* dylux`
+    let color = '2FFF2E'
+    let res = await fg.ttp(text, color)
     let stiker = await sticker(null, res.result, global.packname, global.author)
     if (stiker) return await conn.sendFile(m.chat, stiker, '', '', m)
     throw stiker.toString()

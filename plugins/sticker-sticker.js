@@ -9,24 +9,24 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
   let stick = args.join(" ").split("|");
   let f = stick[0] !== "" ? stick[0] : packname;
   let g = typeof stick[1] !== "undefined" ? stick[1] : author;
-  try { 	
+  try {
     let q = m.quoted ? m.quoted : m
     let mime = q.mimetype || q.mediaType || (q.msg && q.msg.mimetype) || ''
 
     if (/webp|image|video/g.test(mime) || q.mediaMessage) {
       let duration = q.msg?.seconds || q.seconds || 0
       if (/video/g.test(mime) && duration > 11) return m.reply('Máximo 10 segundos')
-      
+
       let img = await q.download?.().catch((err) => {
         console.error('[STICKER Q.DOWNLOAD FAILED]:', err)
         return null
       })
 
       if (!img || img.length === 0) {
-        let viewOnceMsg = q.msg?.message?.imageMessage || 
-                          q.msg?.message?.videoMessage || 
-                          q.message?.imageMessage || 
-                          q.message?.videoMessage || 
+        let viewOnceMsg = q.msg?.message?.imageMessage ||
+                          q.msg?.message?.videoMessage ||
+                          q.message?.imageMessage ||
+                          q.message?.videoMessage ||
                           (q.msg && (q.msg.imageMessage || q.msg.videoMessage)) ||
                           q.msg || q
         if (viewOnceMsg?.mediaKey) {
@@ -74,7 +74,7 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
 }
 handler.help = ['s', 'sticker']
 handler.tags = ['sticker']
-handler.command = ['s', 'sticker'] 
+handler.command = ['s', 'sticker']
 
 export default handler
 

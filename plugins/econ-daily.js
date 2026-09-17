@@ -1,4 +1,3 @@
-
 let free = 1500
 let cooldown = 86400000
 let handler = async (m, {conn}) => {
@@ -13,8 +12,7 @@ let handler = async (m, {conn}) => {
 }
 handler.help = ['daily']
 handler.tags = ['econ']
-handler.command = ['daily', 'claim'] 
-
+handler.command = ['daily', 'claim']
 
 export default handler
 

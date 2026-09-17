@@ -1,4 +1,3 @@
-
 import fg from 'fg-senna'
 let handler = async (m, {conn, text }) => {
   let teks = text ? text : m.quoted && m.quoted.text ? m.quoted.text : ''
@@ -12,11 +11,11 @@ let handler = async (m, {conn, text }) => {
     conn.sendFile(m.chat, res.image, 'img.png', mes, m, null, fwc);
 } catch (e) {
 	m.react(error)
-} 
+}
 
 }
 handler.help = ['letra <música>', 'lyrics <música>']
 handler.tags = ['tools']
-handler.command = ['letra', 'lyrics', 'letras'] 
+handler.command = ['letra', 'lyrics', 'letras']
 
 export default handler

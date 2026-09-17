@@ -5,7 +5,6 @@ let handler = async (m, { conn }) => {
         return m.reply('⚠️ No hay contador en este grupo')
     }
 
-    // borrar datos del grupo
     delete stats[m.chat]
 
     global.db.data.statsMsg = stats
@@ -17,6 +16,6 @@ handler.help = ['resetmsg']
 handler.tags = ['group']
 handler.command = ['resetmsg']
 handler.group = true
-handler.admin = true 
+handler.admin = true
 
 export default handler

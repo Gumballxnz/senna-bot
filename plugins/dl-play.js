@@ -1,4 +1,3 @@
-
 import { searchYouTube, downloadYT } from '../lib/ytHelper.js'
 import fs from 'fs'
 import axios from 'axios'
@@ -26,10 +25,8 @@ let handler = async (m, { conn, args, text, usedPrefix, command }) => {
 
     let { title, thumbnail, url, timestamp, views, ago, seconds, videoId } = vid
 
-    // --- PREDIÇÃO DE PESO REFINADA (Instantânea) ---
-    // Áudio 128kbps ~ 1MB por minuto (0.016MB/s)
     let audioSize = (seconds * 0.016).toFixed(1)
-    // Vídeo 720p ~ 6MB por minuto (0.1 MB/s) - Mais realista para Youtube Mobile
+
     let videoSize = (seconds * 0.1).toFixed(1)
 
     m.react('🎧')
@@ -76,14 +73,14 @@ Responda com 1 ou 2:
     const confData = {
         sender: m.sender,
         to: who,
-        url: url, 
-        title: title, // Salva o nome real
-        chat: chat, 
+        url: url,
+        title: title,
+        chat: chat,
         timeout: setTimeout(() => {
             delete confirmation[senderId];
             delete confirmation[cleanSender];
             delete confirmation[chatKey];
-        }, 180000), // 3 minutos
+        }, 180000),
     };
 
     confirmation[senderId] = confData
@@ -98,18 +95,18 @@ handler.command = ['play','playvid']
 export default handler
 
 handler.before = async (m, { conn }) => {
-    if (m.isBaileys) return; 
-    
+    if (m.isBaileys) return;
+
     const senderId = m.sender
     const cleanSender = conn.decodeJid ? conn.decodeJid(m.sender) : m.sender?.split('@')[0]
     const chatKey = `${m.chat}_${cleanSender}`
 
     const conf = confirmation[senderId] || confirmation[cleanSender] || confirmation[chatKey]
-    if (!conf) return; 
+    if (!conf) return;
 
     let { sender, timeout, url, chat, title } = conf;
     const answer = m.text ? m.text.trim().toLowerCase() : ''
-    
+
     if (/^(1|mp3|audio|áudio)$/i.test(answer)) {
         clearTimeout(timeout);
         delete confirmation[senderId];
@@ -146,7 +143,7 @@ handler.before = async (m, { conn }) => {
                 let isPrems = user.premium
                 let isOwner = global.owner.some(([num]) => num === m.sender.split('@')[0])
                 let limit = isOwner || isPrems ? 2000 : 1000
-                
+
                 let isLimit = limit * 1024 * 1024 < resDL.size
                 if (isLimit) {
                     fs.unlinkSync(resDL.filePath)

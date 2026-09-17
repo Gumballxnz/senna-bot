@@ -1,4 +1,3 @@
-
 import { addExif } from '../lib/sticker.js'
 let handler = async (m, { conn, text, args }) => {
   if (!m.quoted) throw `Responde a un sticker`
@@ -22,6 +21,6 @@ let handler = async (m, { conn, text, args }) => {
 }
 handler.help = ['take <nombre>|<autor>']
 handler.tags = ['sticker']
-handler.command = ['take', 'wm'] 
+handler.command = ['take', 'wm']
 
 export default handler

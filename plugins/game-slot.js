@@ -1,4 +1,3 @@
-//import db from '../lib/database.js'
 let reg = 10
 let maxap = 20000
 let cooldown = 30000
@@ -14,8 +13,8 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
     if (new Date - user.lastslot < cooldown) throw `⏳ Ya has realizado una apuesta. Aguarde *${msToTime((user.lastslot + cooldown) - new Date())}*`
     if (apuesta < 100) throw `✳️ La cantidad de la apuesta debe ser mayor a *100 🪙*`
     if (user.coin < apuesta)throw `✳️ Você não tem suficientes *Coins* para jugar`
-   if (maxap < apuesta) return m.reply(`🎰 La cantidad de apuesta supera el límite máximo de *${maxap} 🪙*`) 
-   	
+   if (maxap < apuesta) return m.reply(`🎰 La cantidad de apuesta supera el límite máximo de *${maxap} 🪙*`)
+
     let emojis = ["🕊️", "🦀", "🦎"];
     let a = Math.floor(Math.random() * emojis.length);
     let b = Math.floor(Math.random() * emojis.length);
@@ -52,15 +51,15 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
     user.lastslot = new Date * 1
     return await m.reply(
         `
-       🎰 ┃ *SLOTS* 
+       🎰 ┃ *SLOTS*
      ───────────
        ${x[0]} : ${y[0]} : ${z[0]}
        ${x[1]} : ${y[1]} : ${z[1]}
        ${x[2]} : ${y[2]} : ${z[2]}
      ───────────
         🎰┃🎰┃ 🎰
-        
-${end}`, null, fwc) 
+
+${end}`, null, fwc)
 }
 handler.help = ['slot <apuesta>']
 handler.tags = ['game']

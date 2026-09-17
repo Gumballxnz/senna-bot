@@ -9,30 +9,30 @@ ${usedPrefix}roulette <cantidad> <espacio>
 
 💰 *Multiplicadores de pago*
 
-🎯 *x36* → Número exacto  
+🎯 *x36* → Número exacto
 • Ej: 7, 12, 30
 
-📦 *x3* → Docenas  
-• 1-12  
-• 13-24  
-• 25-36  
+📦 *x3* → Docenas
+• 1-12
+• 13-24
+• 25-36
 
-📊 *x3* → Columnas  
-• 1st  
-• 2nd  
-• 3rd  
+📊 *x3* → Columnas
+• 1st
+• 2nd
+• 3rd
 
-🔢 *x2* → Mitades  
-• 1-18  
-• 19-36  
+🔢 *x2* → Mitades
+• 1-18
+• 19-36
 
-⚖️ *x2* → Par / Impar  
-• odd  
-• even  
+⚖️ *x2* → Par / Impar
+• odd
+• even
 
-🎨 *x2* → Colores  
-• red  
-• black  
+🎨 *x2* → Colores
+• red
+• black
 
 🧪 *Exemplos*
 ${usedPrefix}roulette 200 odd

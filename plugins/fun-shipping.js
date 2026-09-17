@@ -1,6 +1,5 @@
-
 function handler(m, {conn, groupMetadata }) {
-	
+
 	let time = global.db.data.users[m.sender].shipping + 28800000
   if (new Date - global.db.data.users[m.sender].shipping < 28800000) throw `👩🏻‍❤️‍💋‍👨🏾 Podrás elegir otra pareja dentro de *${msToTime(time - new Date())}* `
 let ps = groupMetadata.participants.map(v => v.id)

@@ -1,5 +1,5 @@
 let handler = async (m, { conn, args, usedPrefix, command }) => {
-    let isClose = { // Switch Case Like :v
+    let isClose = {
         'open': 'not_announcement',
         'close': 'announcement',
     }[(args[0] || '')]
@@ -15,7 +15,7 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
 }
 handler.help = ['group']
 handler.tags = ['group']
-handler.command = ['group', 'grupo'] 
+handler.command = ['group', 'grupo']
 handler.admin = true
 handler.botAdmin = true
 handler.group = true

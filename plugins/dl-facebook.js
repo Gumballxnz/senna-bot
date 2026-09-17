@@ -22,8 +22,8 @@ let handler = async (m, { conn, text, args, usedPrefix, command }) => {
             const { stdout } = await execAsync(`ffprobe -v error -select_streams v:0 -show_entries stream=codec_name -of default=noprint_wrappers=1:nokey=1 "${rawPath}"`)
             if (stdout) codec = stdout.trim()
         } catch(e){}
-        
-        let ffmpegCmd = codec === 'h264' 
+
+        let ffmpegCmd = codec === 'h264'
             ? `ffmpeg -i "${rawPath}" -c:v copy -c:a aac -b:a 128k -movflags +faststart -y "${finalPath}"`
             : `ffmpeg -i "${rawPath}" -c:v libx264 -preset fast -crf 28 -c:a aac -b:a 128k -movflags +faststart -y "${finalPath}"`
 

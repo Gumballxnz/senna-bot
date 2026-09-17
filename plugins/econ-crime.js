@@ -1,5 +1,4 @@
-
-let cooldown = 7200000; 
+let cooldown = 7200000;
 let handler = async (m, { usedPrefix, args, command, text }) => {
   const user = global.db.data.users[m.sender];
   const eligibleUsers = Object.entries(global.db.data.users).filter(([key, value]) => value.coin > 200);
@@ -20,7 +19,7 @@ if (new Date - user.crime < cooldown) throw `⏰ No puedes realizar un *Crimen* 
     	user.coin += rob;
         user2.coin -= rob;
       m.reply(`✅ Crime cometido com sucesso
-      
+
 ┌───⊷ *VICTIMA*
 - *Nombre:* ${user2.name}
 - *Tag:* @${userID.split('@')[0]}
@@ -29,7 +28,7 @@ if (new Date - user.crime < cooldown) throw `⏰ No puedes realizar un *Crimen* 
     } else if (alarmActivated) {
     	user.coin += robA;
         user2.coin -= robA;
-      m.reply(`🚨 No fuiste muy cuidadoso al entrar a robar y activaste la alarma. Solo pudiste llevar 
+      m.reply(`🚨 No fuiste muy cuidadoso al entrar a robar y activaste la alarma. Solo pudiste llevar
 
 ┌───⊷ *VICTIMA*
 - *Nombre:* ${user2.name}
@@ -44,14 +43,13 @@ if (new Date - user.crime < cooldown) throw `⏰ No puedes realizar un *Crimen* 
   } else {
     m.reply('🏦 Os usuários têm suas moedas no banco. tente roubar mais tarde.');
   }
-  
+
 };
 handler.help = ['crime'];
 handler.tags = ['econ'];
 handler.command = ['crime', 'crimen', 'rob', 'robar'];
 
 export default handler;
-
 
 function msToTime(duration) {
   let milliseconds = parseInt((duration % 1000) / 100);

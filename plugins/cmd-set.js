@@ -1,4 +1,3 @@
-
 let handler = async (m, { text, usedPrefix, command }) => {
     global.db.data.sticker = global.db.data.sticker || {}
     if (!m.quoted) throw `✳️ Responde a un mensaje`
@@ -16,7 +15,6 @@ let handler = async (m, { text, usedPrefix, command }) => {
     }
     m.reply(`✅ Comando salvo`)
 }
-
 
 handler.help = ['setcmd <text>']
 handler.tags = ['cmd']

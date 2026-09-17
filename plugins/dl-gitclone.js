@@ -12,13 +12,11 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
     let [, user, repo] = args[0].match(regex)
     repo = repo.replace(/\.git$/, '')
 
-    // 🔎 Obtener info del repo
     let api = `https://api.github.com/repos/${user}/${repo}`
     let res = await fetch(api)
     if (!res.ok) throw 'Repositorio no encontrado'
     let json = await res.json()
 
-    // 📊 Datos solicitados
     let caption = `
 ⭐Stars: ${json.stargazers_count}
 🍴 Forks: ${json.forks_count}
@@ -30,7 +28,6 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
 🔗 Perfil: ${json.owner.html_url}
 `.trim()
 
-    // 📥 Link directo correcto
     let url = `https://codeload.github.com/${user}/${repo}/zip/refs/heads/${json.default_branch}`
     let filename = `${user}-${repo}.zip`
 

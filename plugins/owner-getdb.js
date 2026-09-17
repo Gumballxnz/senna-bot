@@ -19,14 +19,11 @@ let handler = async (m, { conn }) => {
 
   try {
 
-    // verificar archivo
     await fsp.access(filePath)
 
-    // tamaño archivo
     const stats = await fsp.stat(filePath)
     const size = formatSize(stats.size)
 
-    // crear zip
     await new Promise((resolve, reject) => {
 
       const output = fs.createWriteStream(zipPath)
@@ -43,14 +40,12 @@ let handler = async (m, { conn }) => {
 
     await conn.sendFile(m.chat, zipPath, 'database.zip', `📦 *Backup de Database*\n📂 Tamaño: ${size}`, m, null, { mimetype: 'application/zip', asDocument: true })
 
-    // eliminar zip
     await fsp.unlink(zipPath)
 
   } catch (err) {
 
     try {
 
-      // fallback enviar json directo
       const buffer = await fsp.readFile(filePath)
 
       await conn.sendFile(m.chat, buffer, 'database.json', '⚠️ No se pudo comprimir, enviando database directa.', m, null, { mimetype: 'application/json', asDocument: true })

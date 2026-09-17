@@ -1,18 +1,17 @@
- 
 import { File } from 'megajs'
 import mime from 'mime-types'
 let handler = async (m, { conn, args }) => {
 	if (!args[0]) throw `✳️ Insira link de Mega`
 	m.react(rwait)
-	
+
 	try {
 	let file = File.fromURL(args[0])
 	file = await file.loadAttributes()
 	let data = await file.downloadBuffer()
-	let type = mime.contentType(file.name); 
+	let type = mime.contentType(file.name);
 	let size = formatFileSize(file.size)
 
-	let cap = ` 
+	let cap = `
 *📌Nombre:* ${file.name}
 *⚖️Tamaño:* ${size}
 `
@@ -29,7 +28,6 @@ handler.premium = false
 
 export default handler
 
-// convierte Bytes a KB, MB o GB
 let formatFileSize = (bytes) => {
   if (bytes < 1024) {
     return bytes + " B";

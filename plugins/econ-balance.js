@@ -1,6 +1,5 @@
-
 let handler = async (m, {conn, usedPrefix}) => {
-	
+
     let who = m.quoted ? m.quoted.sender : m.mentionedJid && m.mentionedJid[0] ? m.mentionedJid[0] : m.fromMe ? conn.user.jid : m.sender
     let user = global.db.data.users[who]
     if (!(who in global.db.data.users)) throw `✳️ Usuario no esta registrado`
@@ -21,6 +20,6 @@ let handler = async (m, {conn, usedPrefix}) => {
 }
 handler.help = ['balance']
 handler.tags = ['econ']
-handler.command = ['bal', 'diamantes', 'diamond', 'balance'] 
+handler.command = ['bal', 'diamantes', 'diamond', 'balance']
 
 export default handler

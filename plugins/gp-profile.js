@@ -1,4 +1,3 @@
-
 import { createHash } from 'crypto'
 import PhoneNumber from 'awesome-phonenumber'
 import { xpRange } from '../lib/levelling.js'
@@ -17,7 +16,7 @@ let sn = createHash('md5').update(who).digest('hex')
 
 let str = `
 ┌───「 *PERFIL* 」
-▢ *🔖Nombre:* 
+▢ *🔖Nombre:*
    • ${username} ${registered ? '\n   • ' + name + ' ': ''}
    • @${who.replace(/@.+/, '')}
 ▢ *🔗Link:* wa.me/${who.split`@`[0]}${registered ? `\n▢ *🎈Edad:* ${age}\n▢ *🧬Genero:* ${genero}` : ''}

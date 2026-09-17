@@ -1,4 +1,3 @@
-
 import { searchYouTube } from '../lib/ytHelper.js'
 let handler = async (m, {conn, text }) => {
   if (!text) throw `✳️ Insira lo que desea buscar en YT`
@@ -14,8 +13,8 @@ let teks = tes.map(v => `
 `.trim()).join('\n________________________\n\n')
 	conn.sendFile(m.chat, tes[0].image, 'yts.jpeg', teks, m, null, fwc)
 }
-handler.help = ['ytsearch'] 
+handler.help = ['ytsearch']
 handler.tags = ['dl']
-handler.command = ['ytsearch', 'yts'] 
+handler.command = ['ytsearch', 'yts']
 
 export default handler

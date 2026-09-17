@@ -72,7 +72,6 @@ handler.command = ['mates','mate','math','matemáticas']
 
 export default handler
 
-
 let modes = {
 
 noob:      [-5, 5,  -5, 5,  '+-',    20000,  50],
@@ -102,7 +101,6 @@ let b = randomInt(b1, b2)
 
 let op = pickRandom([...ops])
 
-// evitar divisiones con decimales
 if(op == '/'){
 b = randomInt(1, 10)
 a = b * randomInt(1, 20)

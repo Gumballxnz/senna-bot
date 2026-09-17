@@ -10,7 +10,7 @@ let handler = async (m, { args, usedPrefix, command }) => {
 *${usedPrefix + command}* <idioma> [texto]
 *${usedPrefix + command}* es Hello World
 
-≡ *Lista de Idiomas Admitidos:* 
+≡ *Lista de Idiomas Admitidos:*
 
 https://cloud.google.com/translate/docs/languages
 `.trim()

@@ -1,4 +1,3 @@
-
 import fg from 'fg-senna';
 let handler  = async (m, { conn, args, text, usedPrefix, command }) => {
   if (!text) throw `✳️ Exemplo: *${usedPrefix + command}* Billie Eilish`

@@ -1,4 +1,3 @@
-
 import fetch from 'node-fetch'
 import axios from 'axios'
 let cooldown = 3600000
@@ -8,8 +7,6 @@ let handler = async (m, { conn, usedPrefix, command }) => {
   let user = global.db.data.users[m.sender]
   if (new Date - user.lastwork < cooldown) throw `🧘🏻‍♂️ Podrás regresar a trabajar en *${msToTime((user.lastwork + cooldown) - new Date())}*`
 
-    /*let w = await axios.get(global.API('fgmods', '/api/work', { }, 'apikey'))
-    let res = w.data.result*/
     let anu = (await axios.get('https://raw.githubusercontent.com/fgmods/fg-team/main/games/work.json')).data
     let res = pickRandom(anu)
  user.coin += hasil
@@ -35,7 +32,7 @@ function msToTime(duration) {
   minutes = (minutes < 10) ? "0" + minutes : minutes
   seconds = (seconds < 10) ? "0" + seconds : seconds
 
-  return minutes + ` Minutos ` + seconds + ` Segundos` 
+  return minutes + ` Minutos ` + seconds + ` Segundos`
 }
 function pickRandom(list) {
   return list[Math.floor(list.length * Math.random())]

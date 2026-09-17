@@ -9,7 +9,6 @@ let handler = async (m, { conn, args, participants }) => {
 
   for (let p of participants) {
 
-    // Usar phoneNumber si existe
     let jid = p.phoneNumber || p.id
     if (!jid) continue
 

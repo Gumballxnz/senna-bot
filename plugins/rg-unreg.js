@@ -1,4 +1,3 @@
-
 import { createHash } from 'crypto'
 let handler = async function (m, { conn, args, usedPrefix}) {
   if (!args[0]) throw `✳️ Verifique su *Serial* con el comando\n\n${usedPrefix}serial`
@@ -9,10 +8,9 @@ let handler = async function (m, { conn, args, usedPrefix}) {
   user.rgenero = false
   m.reply(`✅ Registro Eliminado`, null, fwc)
 }
-handler.help = ['unreg <Num Serie>'] 
+handler.help = ['unreg <Num Serie>']
 handler.tags = ['rg']
-handler.command = ['unreg'] 
+handler.command = ['unreg']
 handler.register = true
 
 export default handler
-

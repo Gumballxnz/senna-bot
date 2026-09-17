@@ -1,4 +1,3 @@
-
 import fetch from 'node-fetch'
 import axios from 'axios'
 import fg from "fg-senna"
@@ -8,17 +7,17 @@ m.react(rwait)
 let type = (command).toLowerCase()
 
 switch (type) {
-	
+
 case 'loli':
   case 'neko':
 
       const cmd = command.toLowerCase()
 
-      const img = await fg[cmd]() // fg.loli() o fg.neko()
+      const img = await fg[cmd]()
        conn.sendFile(m.chat, img, 'img.jpg', `✅ Random *${command}*`, m)
-	     m.react(dmoji) 
+	     m.react(dmoji)
 	break
-	
+
 case 'waifu':
 case 'megumin':
   let res = await fetch(`https://api.waifu.pics/sfw/${command}`)
@@ -26,17 +25,16 @@ case 'megumin':
     let json = await res.json()
     if (!json.url) throw '❎ Erro'
     conn.sendFile(m.chat, json.url, 'img.jpg', `✅ Random *${command}*`, m)
-   m.react(dmoji) 
+   m.react(dmoji)
 break
 
 default:
- } 
+ }
 }
 
 handler.help = ['waifu', 'neko', 'megumin', 'loli']
 handler.tags = ['nime']
-handler.command = ['waifu', 'neko', 'megumin', 'loli'] 
-//handler.diamond = true
+handler.command = ['waifu', 'neko', 'megumin', 'loli']
 
 export default handler
 

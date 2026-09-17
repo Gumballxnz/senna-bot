@@ -34,10 +34,8 @@ ${pluginNames.map(name => `▢ ${name}`).join('\n')}
     if (!fs.existsSync(pluginPath))
       return m.reply('❎ El archivo no existe en la carpeta plugins')
 
-    // Leer archivo
     const fileBuffer = fs.readFileSync(pluginPath)
 
-    // Enviar directamente como documento
     await conn.sendMessage(m.chat, {
       document: fileBuffer,
       mimetype: 'application/javascript',

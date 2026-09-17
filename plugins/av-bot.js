@@ -1,4 +1,3 @@
-
 let handler = async (m, { conn}) => {
 
 let name = await conn.getName(m.sender)
@@ -9,11 +8,11 @@ conn.sendButton(m.chat, `Hola *${name}*\n`, global.fg_ig, null, [
       ['⦙☰ Menu', '/help'],
       ['⦙☰ Menu 2', '/menu2'],
       [`⌬ Grupos`, '/gpdylux']
-    ], m) 
+    ], m)
 
     conn.sendFile(m.chat, av, 'audio.ogg', '', m, true, { asAudio: true, ptt: false})
-    //await conn.sendFile(m.chat, av, 'file.mp4', '', m, 1, { mimetype: 'audio/mp4' })
-} 
+
+}
 
 handler.customPrefix = /^(bot|seven|dylux)$/i
 handler.command = new RegExp

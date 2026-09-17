@@ -10,11 +10,10 @@ let handler = async (m, { conn, text, args, usedPrefix, command }) => {
     if (!args[0]) throw `📌 Exemplo : ${usedPrefix + command} https://vm.tiktok.com/ZMYG92bUh/`
     if (!args[0].match(/tiktok/gi)) throw `❎ Revisa que el link sea de TikTok`
     m.react(rwait)
-  
+
     try {
         let success = false
 
-        // Motor 1: fg-senna (API Direta e Rápida)
         let data = null
         try {
             data = await fg.tiktok(args[0])
@@ -25,7 +24,7 @@ let handler = async (m, { conn, text, args, usedPrefix, command }) => {
         if (data && data.result) {
             if (!data.result.images) {
                 let texInfo = `
-┌─⊷ *TIKTOK DL* 
+┌─⊷ *TIKTOK DL*
 ▢ *Nombre:* ${data.result.author.nickname}
 ▢ *usuario:* ${data.result.author.unique_id}
 ▢ *Duracion:* ${data.result.duration}
@@ -51,7 +50,6 @@ let handler = async (m, { conn, text, args, usedPrefix, command }) => {
             }
         }
 
-        // Motor 3: yt-dlp local (Fallback de alta qualidade)
         if (!success) {
             const TEMP_DIR = path.join(process.cwd(), 'tmp')
             if (!fs.existsSync(TEMP_DIR)) fs.mkdirSync(TEMP_DIR, { recursive: true })

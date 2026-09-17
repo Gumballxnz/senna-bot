@@ -1,6 +1,5 @@
-
 let handler = async (m, { conn, usedPrefix, command }) => {
-	
+
 if (!m.quoted) throw `✳️ Responde a un mensaje para eliminar`
 try {
 let delet = m.message.extendedTextMessage.contextInfo.participant

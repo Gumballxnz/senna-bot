@@ -17,7 +17,6 @@ if (!json || !json.sticker_url || !json.sticker_url.length) {
 return m.reply('❌ No se encontraron stickers')
 }
 
-// limitar para evitar crash
 let stickers = json.sticker_url.slice(0, 10)
 
 await m.reply(`
@@ -32,10 +31,8 @@ for (let url of stickers) {
 
 try {
 
-// enviar directo sin convertir
 await conn.sendFile(m.chat, url, 'sticker.webp', '', m, false, { asSticker: true })
 
-// delay para evitar flood
 await delay(800)
 
 } catch (e) {

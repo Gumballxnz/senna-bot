@@ -1,4 +1,3 @@
- 
 let precioDiamante = 200;
 let precioPremiumHora = 50;
 let precioPremiumDia = 800;
@@ -16,9 +15,7 @@ let handler = async (m, { conn, text, usedPrefix, command, args }) => {
     let all =  Math.floor(user.coin / precioDiamante)
    let count = sca.replace('all', all)
    count = Math.max(1, count)
-    //if (isNaN(count)) throw `✳️ ${mssg.isNan}`;
-    
-    
+
     let totalCost = precioDiamante * count;
 
     if (user.coin >= totalCost) {
@@ -28,7 +25,7 @@ let handler = async (m, { conn, text, usedPrefix, command, args }) => {
       m.reply(`
 ┌─「 *COMPROBANTE* 」
 ‣ *Comprado:* Diamante
-‣ *Cantidad comprada:* ${count.toLocaleString()} 💎 
+‣ *Cantidad comprada:* ${count.toLocaleString()} 💎
 ‣ *Gastado:* -${totalCost.toLocaleString()} 🪙
 └──────────────`, null, fwc);
     } else {
@@ -45,18 +42,17 @@ let handler = async (m, { conn, text, usedPrefix, command, args }) => {
       count = parseInt(input.slice(0, -1));
       unit = 'días';
     } else {
-      throw `✳️ ${mssg.noTime} 
+      throw `✳️ ${mssg.noTime}
 
 *Exemplo:*
 ${usedPrefix + command} <ID> <cantidad>
 ${usedPrefix + command} 02 4d
 
-h = Hora 
+h = Hora
 d = Dia
 `;
     }
 
-    //if (isNaN(count)) throw `✳️ ${mssg.isNan}`;
     if (!/^[1-9]\d*$/.test(count)) throw `✳️ La cantidad debe ser un número válido`;
 
     let precioPremium = 0;

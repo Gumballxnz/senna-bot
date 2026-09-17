@@ -1,4 +1,3 @@
-
 let handler = async (m, { conn, args, usedPrefix, command, isAdmin, isOwner }) => {
     if (!isAdmin && !isOwner) return dfail('admin', m, conn)
 
@@ -7,7 +6,7 @@ let handler = async (m, { conn, args, usedPrefix, command, isAdmin, isOwner }) =
 
     let groupMetadata = await conn.groupMetadata(m.chat)
     let participant = groupMetadata.participants.find(p => p.id === user)
-    
+
     if (!participant) throw `❎ Esse usuário não está no grupo!`
 
     let isTargetAdmin = participant.admin === 'admin' || participant.admin === 'superadmin'

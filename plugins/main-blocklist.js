@@ -1,6 +1,5 @@
-
 let handler = async (m, { conn }) => {
-	
+
 	await conn.fetchBlocklist().then(async data => {
 		let txt = `*≡ Lista de Num Bloqueados*\n\n*Total:* ${data.length}\n\n┌─⊷\n`
 		for (let i of data) {
@@ -16,6 +15,6 @@ let handler = async (m, { conn }) => {
 
 handler.help = ['blocklist']
 handler.tags = ['main']
-handler.command = ['blocklist', 'listblock'] 
+handler.command = ['blocklist', 'listblock']
 
 export default handler

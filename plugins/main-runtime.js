@@ -1,6 +1,5 @@
-
 let handler = async (m, { conn, args, usedPrefix, command }) => {
-	
+
 	let _muptime
     if (process.send) {
       process.send('uptime')
@@ -10,12 +9,12 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
       }) * 1000
     }
     let muptime = clockString(_muptime)
-   m.reply(`🏮 *Tiempo Activo*  \n\n${muptime}`, null, fwc) 
+   m.reply(`🏮 *Tiempo Activo*  \n\n${muptime}`, null, fwc)
 }
-handler.help = ['runtime'] 
+handler.help = ['runtime']
 handler.tags = ['main']
 handler.command = ['runtime', 'uptime']
-export default handler 
+export default handler
 
 function clockString(ms) {
   let d = isNaN(ms) ? '--' : Math.floor(ms / 86400000)

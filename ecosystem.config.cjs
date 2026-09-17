@@ -1,10 +1,10 @@
 module.exports = {
   apps: [{
     name: 'senna-bot',
-    script: 'index.js',
-    cwd: '/home/ubuntu/senna-bot',
-    node_args: '--max-old-space-size=4096 --expose-gc',
-    max_memory_restart: '4G',
+    script: 'main.js',
+    cwd: '/root/senna-bot',
+    node_args: '--max-old-space-size=256 --expose-gc',
+    max_memory_restart: '300M',
     autorestart: true,
     watch: false,
     kill_timeout: 10000,
