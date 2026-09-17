@@ -1,7 +1,19 @@
 import fs from "fs"
 import path from "path"
 
-let handler = async (m, { conn, usedPrefix }) => {
+let handler = async (m, { conn, usedPrefix, isOwner, isPrems }) => {
+    const botJid = conn.user?.jid || (conn.user?.id ? conn.decodeJid(conn.user.id) : '')
+    const botSettings = (botJid && global.db.data.settings[botJid]) ? global.db.data.settings[botJid] : {}
+
+    if (!botSettings.botclone && !isOwner) {
+        throw `❌ *A criação e recuperação de Sub-Bots está desativada no momento!*\n\nO proprietário do bot desativou este recurso temporariamente.`
+    }
+
+    let user = global.db.data.users[m.sender] || {}
+    let isUserPrem = isPrems || user.prem || isOwner
+    if (!isUserPrem) {
+        throw `👑 *Recurso Premium!*\n\nA criação e recuperação de Sub-Bot é exclusiva para usuários *Premium* ou para o Dono do Bot.`
+    }
 
     let basePath = "./bebots"
 

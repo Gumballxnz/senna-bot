@@ -1,4 +1,3 @@
-
 let handler = async (m, { conn, text }) => {
     if (!text) throw `✳️ Por favor, insira el enlace de un canal.`;
 

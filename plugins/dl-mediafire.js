@@ -1,9 +1,9 @@
 import fg from 'fg-senna'
 import fetch from 'node-fetch'
-let free = 1000 // limite de descarga
+let free = 1000
 let prem = 2000
 let handler = async (m, { conn, args, text, usedPrefix, command, isOwner, isPrems }) => {
-	  
+
    if (!args[0]) throw `✳️ Insira link de Mediafire`
     if (!args[0].match(/mediafire/gi)) throw `❎ Insira link de Mediafire`
     m.react(rwait)
@@ -16,7 +16,7 @@ let handler = async (m, { conn, args, text, usedPrefix, command, isOwner, isPrem
 
 	let res = await fg.mediafire(args[0])
     let { url, type, filename, ext, aploud, size, sizeB } = res
-   
+
 	   let isLimit = limit * 1024 * 1024 < sizeB
     let caption = `
    ≡ *MEDIAFIRE DL*
@@ -24,23 +24,21 @@ let handler = async (m, { conn, args, text, usedPrefix, command, isOwner, isPrem
 *📌Nombre:* ${filename}
 *⚖️Tamaño:* ${size}
 *🔼Subido:* ${aploud}
-${isLimit ? `\n▢ Limite superado *+${free} MB* pasate a premium para descargar hasta *${prem} MB*` : ''} 
+${isLimit ? `\n▢ Limite superado *+${free} MB* pasate a premium para descargar hasta *${prem} MB*` : ''}
 `.trim()
 await conn.sendFile(m.chat, ss, 'ssweb.png', caption, m, null, fwc)
-//m.reply(caption)
+
 if(!isLimit) await conn.sendFile(m.chat, url, filename, '', m, null, { mimetype: ext, asDocument: true })
- 
+
 m.react(done)
   } catch {
     m.reply("error")
   }
 
-  
-
 }
 handler.help = ['mediafire <url>']
 handler.tags = ['dl', 'prem']
-handler.command = ['mediafire', 'mfire'] 
+handler.command = ['mediafire', 'mfire']
 handler.diamond = true
 handler.premium = false
 

@@ -7,13 +7,10 @@ let handler = async (m, { conn, command, args, text }) => {
     try {
         m.react(rwait)
 
-        
         let url = text.trim()
         if (!/^https?:\/\//i.test(url)) url = 'https://' + url
 
-        // 📸 Full page si termina en "f"
         let full = /f$/i.test(command)
-
 
         let res = await fetch(global.API('fg_ss', '/api/ssweb', { url, delay: 1000, full }))
 
@@ -26,9 +23,9 @@ let handler = async (m, { conn, command, args, text }) => {
         m.react(done)
 
     } catch (e) {
-       
+
         m.reply('❌ Erro al generar la captura')
-        
+
     }
 }
 

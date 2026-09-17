@@ -1,7 +1,5 @@
-
-//-- process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
-import './config.js'; 
-import { createRequire } from "module"; // Bring in the ability to create the 'require' method
+import './config.js';
+import { createRequire } from "module";
 import path, { join } from 'path'
 import { fileURLToPath, pathToFileURL } from 'url'
 import { platform } from 'process'
@@ -15,7 +13,6 @@ import syntaxerror from 'syntax-error';
 import { tmpdir } from 'os';
 import { format } from 'util';
 
-//import makeWASocket from '@whiskeysockets/baileys'
 import { makeWASocket } from './lib/simple.js'
 import { protoType, serialize } from './lib/simple.js'
 
@@ -25,14 +22,11 @@ import { mongoDB, mongoDBV2 } from './lib/mongoDB.js';
 import store from './lib/store.js'
 import readline from 'readline'
 
-
-
-
 const {
     useMultiFileAuthState,
     DisconnectReason,
     fetchLatestBaileysVersion,
-    makeCacheableSignalKeyStore, 
+    makeCacheableSignalKeyStore,
     jidNormalizedUser,
     Browsers
    } = await import('@whiskeysockets/baileys')
@@ -45,10 +39,10 @@ const { chain } = lodash
 protoType()
 serialize()
 
-global.__filename = function filename(pathURL = import.meta.url, rmPrefix = platform !== 'win32') { return rmPrefix ? /file:\/\/\//.test(pathURL) ? fileURLToPath(pathURL) : pathURL : pathToFileURL(pathURL).toString() }; global.__dirname = function dirname(pathURL) { return path.dirname(global.__filename(pathURL, true)) }; global.__require = function require(dir = import.meta.url) { return createRequire(dir) } 
+global.__filename = function filename(pathURL = import.meta.url, rmPrefix = platform !== 'win32') { return rmPrefix ? /file:\/\/\//.test(pathURL) ? fileURLToPath(pathURL) : pathURL : pathToFileURL(pathURL).toString() }; global.__dirname = function dirname(pathURL) { return path.dirname(global.__filename(pathURL, true)) }; global.__require = function require(dir = import.meta.url) { return createRequire(dir) }
 
 global.API = (name, path = '/', query = {}, apikeyqueryname) => (name in global.APIs ? global.APIs[name] : name) + path + (query || apikeyqueryname ? '?' + new URLSearchParams(Object.entries({ ...query, ...(apikeyqueryname ? { [apikeyqueryname]: global.APIKeys[name in global.APIs ? global.APIs[name] : name] } : {}) })) : '')
-// global.Fn = function functionCallBack(fn, ...args) { return fn.call(global.conn, ...args) }
+
 global.timestamp = {
   start: new Date
 }
@@ -58,8 +52,6 @@ const __dirname = global.__dirname(import.meta.url)
 global.opts = new Object(yargs(process.argv.slice(2)).exitProcess(false).parse())
 global.prefix = new RegExp('^[' + (opts['prefix'] || '‎./#!').replace(/[|\\{}()[\]^$+*?.\-\^]/g, '\\$&') + ']')
 
-//global.opts['db'] = "mongodb+srv://dbdyluxbot:password@cluster0.xwbxda5.mongodb.net/?retryWrites=true&w=majority"
-
 global.db = new Low(
   /https?:\/\//.test(opts['db'] || '') ?
     new cloudDBAdapter(opts['db']) : /mongodb(\+srv)?:\/\//i.test(opts['db']) ?
@@ -67,8 +59,7 @@ global.db = new Low(
       new JSONFile(`${opts._[0] ? opts._[0] + '_' : ''}database.json`)
 )
 
-
-global.DATABASE = global.db 
+global.DATABASE = global.db
 global.loadDatabase = async function loadDatabase() {
   if (global.db.READ) return new Promise((resolve) => {
     const intervalId = setInterval(async function () {
@@ -95,7 +86,6 @@ global.loadDatabase = async function loadDatabase() {
 }
 loadDatabase()
 
-//-- SESSION
 global.authFile = path.join(__dirname, 'sessions')
 if (!fs.existsSync(global.authFile)) fs.mkdirSync(global.authFile, { recursive: true })
 const {state, saveState, saveCreds} = await useMultiFileAuthState(global.authFile)
@@ -126,7 +116,7 @@ const connectionOptions = {
         let jid = jidNormalizedUser(key.remoteJid);
         let msg = await store.loadMessage(jid, key.id);
         return msg?.message || "";
-    }    
+    }
 };
 
 global.conn = makeWASocket(connectionOptions)
@@ -156,7 +146,6 @@ setInterval(() => {
 
 conn.ev.on('creds.update', saveCreds)
 
-// Código de Pareamento Automático para o número principal
 let isPairingRequested = false
 async function requestPairing() {
     if (!global.conn || global.conn.authState?.creds?.registered || global.conn.authState?.creds?.me || isPairingRequested) return
@@ -182,8 +171,6 @@ if (!conn.authState?.creds?.registered && !conn.authState?.creds?.me) {
 
 conn.isInit = false
 
-
-
 if (!opts['test']) {
   setInterval(async () => {
     if (global.db.data) await global.db.write().catch(console.error)
@@ -193,8 +180,6 @@ if (!opts['test']) {
   }, 60 * 1000)
 }
 
-
-/* Clear */
 async function clearTmp() {
   const dirs = [tmpdir(), join(__dirname, './tmp')]
   const now = Date.now()
@@ -214,8 +199,6 @@ async function clearTmp() {
     } catch (e) {}
   }
 }
-
-
 
 async function connectionUpdate(update) {
   const { connection, lastDisconnect, qr } = update
@@ -246,8 +229,7 @@ async function connectionUpdate(update) {
       }
       console.log('❌ Reconexão automática desativada para evitar sobrecarga no servidor.')
       console.log('❌------------------------------------------------------------❌')
-      
-      // Limpa os listeners e desativa a reconexão para manter o processo inativo
+
       try {
         global.conn.ws.close()
       } catch (e) {}
@@ -275,20 +257,18 @@ async function connectionUpdate(update) {
 
   if (connection === 'open') {
     console.log('🟢 BOT CONECTADO')
-    // Salvar sessão imediatamente ao conectar
+
     if (global.db.data) await global.db.write().catch(console.error)
-    
-    // Presença online contínua
+
     try {
       await global.conn.sendPresenceUpdate('available')
     } catch (e) {
       console.error('Erro ao enviar status de presença online:', e)
     }
   }
-} //-- cu 
+}
 
 process.on('uncaughtException', console.error)
-// let strQuot = /(["'])(?:(?=(\\?))\2.)*?\1/
 
 let isInit = true;
 let handler = await import('./handler.js')
@@ -360,13 +340,10 @@ global.reloadHandler = async function (restatConn) {
   return true
 }
 
-
 const pluginFolder = global.__dirname(join(__dirname, './plugins/index'))
 const pluginFilter = filename => /\.js$/.test(filename)
 global.plugins = {}
 
-
-//-----
 async function filesInit() {
   const start = Date.now()
 
@@ -403,14 +380,11 @@ async function filesInit() {
 }
 
 filesInit()
-//filesInit().then(_ => console.log(Object.keys(global.plugins))).catch(console.error)
-//-----
 
 process.on('unhandledRejection', (err) => {
     console.error('UNHANDLED:', err)
 })
 
-///--
 global.reload = async (_ev, filename) => {
   if (!pluginFilter(filename)) return
 
@@ -422,7 +396,7 @@ global.reload = async (_ev, filename) => {
   const exists = existsSync(dir)
 
   try {
-    // 🗑 Plugin eliminado
+
     if (!exists) {
       if (isExisting) {
         delete global.plugins[filename]
@@ -431,7 +405,6 @@ global.reload = async (_ev, filename) => {
       return
     }
 
-    // 🔍 Validar sintaxis antes de importar
     const code = readFileSync(dir, 'utf8')
     const err = syntaxerror(code, filename, {
       sourceType: 'module',
@@ -441,7 +414,6 @@ global.reload = async (_ev, filename) => {
     if (err) {
   const { line, column, message } = err
 
-  // Obtener líneas del código
   const lines = code.split('\n')
   const errorLine = lines[line - 1]
 
@@ -456,7 +428,6 @@ global.reload = async (_ev, filename) => {
   return
 }
 
-    // ♻ Import dinámico con cache-bust
     const module = await import(`${global.__filename(dir)}?update=${Date.now()}`)
     global.plugins[filename] = module.default || module
 
@@ -481,19 +452,17 @@ global.reload = async (_ev, filename) => {
       chalk.gray(e.message)
     )
   } finally {
-    // 🔤 Ordenar plugins alfabéticamente
+
     global.plugins = Object.fromEntries(
       Object.entries(global.plugins).sort(([a], [b]) => a.localeCompare(b))
     )
   }
 }
-//---
 
 Object.freeze(global.reload)
 watch(pluginFolder, global.reload)
 await global.reloadHandler()
 
-// Quick Test
 async function _quickTest() {
   const start = Date.now()
 
@@ -535,7 +504,6 @@ async function _quickTest() {
     chalk.cyan.bold('━━━━━━━━━━━━━━━━━━━━━━')
   )
 
-  // Advertencias solo si algo falla
   if (!ffmpeg)
     conn.logger.warn('Instala FFmpeg para enviar videos.')
 
@@ -545,7 +513,6 @@ async function _quickTest() {
   if (!imageMagick)
     conn.logger.warn('Instala ImageMagick o GraphicsMagick para stickers.')
 }
-//--
 
 _quickTest()
   .then(() => console.log('✅ Prueba rápida realizada!'))
