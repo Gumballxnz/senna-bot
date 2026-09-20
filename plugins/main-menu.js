@@ -115,7 +115,7 @@ let handler = async (m, { conn, usedPrefix: _p, __dirname }) => {
 
     let pp = './src/fg_logo.jpg'
 
-    conn.sendFile(m.chat, pp, 'menu.jpg', text.trim(), m, null, fwc)
+    await conn.sendFile(m.chat, pp, 'menu.jpg', text.trim(), m, null, fwc)
 
     m.react('📚')
 
