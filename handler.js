@@ -59,6 +59,8 @@ global.db.data.licenses ||= {}
         afk: -1,
         afkReason: '',
         banned: false,
+        prem: false,
+        premiumTime: 0,
 
         level: 0,
         role: 'Novato',
@@ -164,6 +166,10 @@ if (!global.db.data.users[m.sender]) {
 }
 
 let _user = global.db.data && global.db.data.users && global.db.data.users[m.sender]
+if (_user?.prem && _user?.premiumTime > 0 && Date.now() >= _user.premiumTime) {
+    _user.prem = false
+    _user.premiumTime = 0
+}
 
 const botNumber = this.user?.id?.replace(/:[0-9]+/g, '') || ''
 const sender = ((await conn.getJid(m.sender)) || m.sender).split(':')[0] + '@s.whatsapp.net'

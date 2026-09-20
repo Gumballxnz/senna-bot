@@ -4,6 +4,7 @@ database.json
 database_backup.json
 npm-debug.log
 sessions
+bebots/
 package-lock.json
 tmp/
 plugins_backup/
@@ -29,3 +30,4 @@ tmp_*
 test_temp*
 teste_temp*
 *.dump.sql
+VPS_MEMORY.md

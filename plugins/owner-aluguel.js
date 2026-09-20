@@ -50,30 +50,68 @@ let handler = async (m, { conn, args, text, usedPrefix, command, isOwner }) => {
     let chat = global.db.data.chats[m.chat]
     global.db.data.licenses = global.db.data.licenses || {}
 
-    const groupOnlyCmds = ['aluguel', 'addaluguel', 'delaluguel']
+    const groupOnlyCmds = ['aluguel', 'licenca', 'addaluguel', 'delaluguel', 'resgatar', 'ativarlicenca']
     if (groupOnlyCmds.includes(command) && !m.isGroup) {
         return m.reply(`⚠️ Este comando só pode ser utilizado dentro de um grupo!`)
     }
 
-    if (command === 'aluguel') {
-        if (!isOwner) return global.dfail('owner', m, conn)
-        if (!chat.expired || chat.expired === 0) {
-            return m.reply(`ℹ️ *Status de Aluguel:* Este grupo não possui aluguel ativo (uso livre, a menos que o modo restrito esteja ativado globalmente).`)
-        }
+    if (command === 'aluguel' || command === 'licenca') {
+        const botJid = conn.user?.jid || (conn.user?.id ? conn.decodeJid(conn.user.id) : '')
+        const botSettings = global.db.data.settings[botJid] || {}
+        const isRestrict = botSettings.restrictgp || false
 
         if (chat.expired === -1) {
-            return m.reply(`🟢 *Status de Aluguel:* Permanente / Vitalício\n📅 *Vence em:* Nunca expira\n⏳ *Tempo restante:* Infinito`)
+            return m.reply(`🟢 *Status da Licença:* Permanente / Vitalícia\n📅 *Vencimento:* Nunca expira\n⏳ *Tempo restante:* Ilimitado`)
         }
 
-        let remaining = chat.expired - Date.now()
-        if (remaining <= 0) {
-            return m.reply(`🔴 *Status de Aluguel:* Período expirado.`)
+        let remaining = (chat.expired || 0) - Date.now()
+        if (chat.expired && chat.expired > 0 && remaining > 0) {
+            let dateStr = new Date(chat.expired).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })
+            let durationStr = formatDuration(remaining)
+            return m.reply(`🟢 *Status da Licença:* Ativa\n📅 *Vence em:* ${dateStr} (Brasília)\n⏳ *Tempo restante:* ${durationStr}`)
         }
 
-        let dateStr = new Date(chat.expired).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })
-        let durationStr = formatDuration(remaining)
+        if (chat.expired && remaining <= 0 && chat.expired !== 0) {
+            return m.reply(`🔴 *Status da Licença:* Expirada!\n\n_Para renovar ou ativar uma licença, digite:_\n*${usedPrefix}resgatar SENNA-XXXX-XXXX-XXXX*\n_Ou envie o código diretamente no grupo._`)
+        }
 
-        m.reply(`🟢 *Status de Aluguel:* Ativo\n📅 *Vence em:* ${dateStr} (Horário de Brasília)\n⏳ *Tempo restante:* ${durationStr}`)
+        return m.reply(`ℹ️ *Status da Licença:* Este grupo não possui licença ativa.\n📌 *Modo do Bot:* ${isRestrict ? '🔒 Exige Licença (Comandos restritos)' : '🔓 Livre para todos os grupos'}\n\n_Para ativar uma licença, use:_\n*${usedPrefix}resgatar SENNA-XXXX-XXXX-XXXX*`)
+    }
+
+    if (command === 'resgatar' || command === 'ativarlicenca') {
+        let code = (args[0] || '').trim().toUpperCase()
+        if (!code) return m.reply(`✳️ *Como resgatar:*\n${usedPrefix + command} SENNA-XXXX-XXXX-XXXX\n\n_Ou simplesmente envie o código diretamente no grupo._`)
+        if (!global.db.data.licenses[code]) {
+            return m.reply(`❌ *Licença inválida ou já utilizada!* Verifique se digitou o código corretamente.`)
+        }
+
+        let license = global.db.data.licenses[code]
+        let created = typeof license === 'object' ? license.created : Date.now()
+        let duration = typeof license === 'object' ? license.duration : license
+
+        if (Date.now() - created > 24 * 60 * 60 * 1000) {
+            delete global.db.data.licenses[code]
+            return m.reply(`🔴 *Licença expirada!* Esta licença foi gerada há mais de 24 horas e não foi utilizada a tempo.`)
+        }
+
+        if (duration === -1) {
+            chat.expired = -1
+        } else {
+            let currentExpired = chat.expired && chat.expired > Date.now() ? chat.expired : Date.now()
+            if (chat.expired !== -1) {
+                chat.expired = currentExpired + duration
+            }
+        }
+
+        delete global.db.data.licenses[code]
+        if (global.db && typeof global.db.write === 'function') {
+            await global.db.write().catch(() => {})
+        }
+
+        let dateStr = chat.expired === -1 ? 'Nunca expira (Permanente)' : new Date(chat.expired).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })
+        let durationStr = duration === -1 ? 'Permanente' : formatDuration(duration)
+
+        return m.reply(`✅ *LICENÇA ATIVADA COM SUCESSO!*\n\n🔑 *Código:* ${code}\n⏳ *Duração adicionada:* ${durationStr}\n📅 *Novo vencimento:* ${dateStr}\n\nO bot agora está liberado para este grupo!`)
     }
 
     if (command === 'addaluguel') {
@@ -178,8 +216,8 @@ let handler = async (m, { conn, args, text, usedPrefix, command, isOwner }) => {
     }
 }
 
-handler.help = ['aluguel', 'addaluguel <duração>', 'delaluguel', 'gerarlicenca <duração>', 'licencas', 'listargrupos']
+handler.help = ['aluguel', 'licenca', 'resgatar <código>', 'gerarlicenca <duração>', 'licencas', 'listargrupos']
 handler.tags = ['owner', 'group']
-handler.command = ['aluguel', 'addaluguel', 'delaluguel', 'gerarlicenca', 'genkey', 'licencas', 'listkeys', 'listargrupos', 'grupos']
+handler.command = ['aluguel', 'licenca', 'addaluguel', 'delaluguel', 'gerarlicenca', 'genkey', 'licencas', 'listkeys', 'listargrupos', 'grupos', 'resgatar', 'ativarlicenca']
 
 export default handler

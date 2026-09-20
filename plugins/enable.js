@@ -8,8 +8,12 @@ let handler = async (m, { conn, usedPrefix, command, args, isOwner, isAdmin, isR
   let bot = botJid ? global.db.data.settings[botJid] : {}
   let type = (args[0] || '').toLowerCase()
 
-  if (/^(public|publico|self|bot)$/i.test(command)) {
+  if (/^(public|publico|self)$/i.test(command)) {
     type = 'public'
+    if (!args[0]) {
+      const currentSelf = global.opts['self'] || bot.self || false
+      return m.reply(`🤖 *MODO PÚBLICO:*\n\n📌 *Status:* ${currentSelf ? '🔴 *Desativado (Privado / Self)*' : '🟢 *Ativado (Público)*'}\n\n*Como alterar:*\n• *${usedPrefix + command} on* -> Ativa modo público (todos podem usar)\n• *${usedPrefix + command} off* -> Ativa modo privado (apenas dono)`)
+    }
     isEnable = /true|enable|(turn)?on|1/i.test(args[0] || '')
   }
 
@@ -216,6 +220,6 @@ let handler = async (m, { conn, usedPrefix, command, args, isOwner, isAdmin, isR
 }
 handler.help = ['on', 'off'].map(v => v + ' <opção>')
 handler.tags = ['nable']
-handler.command = /^((en|dis)able|(tru|fals)e|(turn)?o(n|ff)|[01]|public|publico|self|bot)$/i
+handler.command = /^((en|dis)able|(tru|fals)e|(turn)?o(n|ff)|[01]|public|publico|self)$/i
 
 export default handler

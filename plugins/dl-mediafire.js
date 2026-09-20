@@ -1,40 +1,33 @@
 import fg from 'fg-senna'
-import fetch from 'node-fetch'
+
 let free = 1000
 let prem = 2000
-let handler = async (m, { conn, args, text, usedPrefix, command, isOwner, isPrems }) => {
+let handler = async (m, { conn, args, isOwner, isPrems }) => {
+  if (!args[0]) throw '✳️ Insira link do Mediafire'
+  if (!args[0].match(/mediafire/gi)) throw '❎ Insira link do Mediafire'
+  m.react(rwait)
 
-   if (!args[0]) throw `✳️ Insira link de Mediafire`
-    if (!args[0].match(/mediafire/gi)) throw `❎ Insira link de Mediafire`
-    m.react(rwait)
-
-    let limit = isPrems || isOwner ? prem : free
-     let u = /https?:\/\//.test(args[0]) ? args[0] : 'https://' + args[0]
-    let ss = await (await fetch(global.API('fg_ss', '/api/ssweb', { delay: 1000, url: u }))).buffer()
+  let limit = isPrems || isOwner ? prem : free
 
   try {
-
-	let res = await fg.mediafire(args[0])
-    let { url, type, filename, ext, aploud, size, sizeB } = res
-
-	   let isLimit = limit * 1024 * 1024 < sizeB
+    let res = await fg.mediafire(args[0])
+    let { url, filename, ext, aploud, size, sizeB } = res
+    let isLimit = limit * 1024 * 1024 < sizeB
     let caption = `
    ≡ *MEDIAFIRE DL*
 
-*📌Nombre:* ${filename}
-*⚖️Tamaño:* ${size}
-*🔼Subido:* ${aploud}
-${isLimit ? `\n▢ Limite superado *+${free} MB* pasate a premium para descargar hasta *${prem} MB*` : ''}
+*📌 Nome:* ${filename}
+*⚖️ Tamanho:* ${size}
+*🔼 Subido:* ${aploud}
+${isLimit ? `\n▢ Limite superado *+${free} MB* passe a premium para baixar até *${prem} MB*` : ''}
 `.trim()
-await conn.sendFile(m.chat, ss, 'ssweb.png', caption, m, null, fwc)
 
-if(!isLimit) await conn.sendFile(m.chat, url, filename, '', m, null, { mimetype: ext, asDocument: true })
-
-m.react(done)
+    await m.reply(caption)
+    if (!isLimit) await conn.sendFile(m.chat, url, filename, '', m, null, { mimetype: ext, asDocument: true })
+    m.react(done)
   } catch {
-    m.reply("error")
+    m.reply('❌ Erro ao processar o link do Mediafire. Certifique-se de que é um link válido de arquivo.')
   }
-
 }
 handler.help = ['mediafire <url>']
 handler.tags = ['dl', 'prem']

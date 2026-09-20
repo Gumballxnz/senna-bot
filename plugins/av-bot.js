@@ -14,7 +14,7 @@ conn.sendButton(m.chat, `Hola *${name}*\n`, global.fg_ig, null, [
 
 }
 
-handler.customPrefix = /^(bot|seven|dylux)$/i
+handler.customPrefix = /^(seven|dylux)$/i
 handler.command = new RegExp
 
 export default handler

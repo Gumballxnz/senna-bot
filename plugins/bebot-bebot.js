@@ -269,6 +269,7 @@ startBot()
 handler.help = ["jadibot", "botclone", "serbot"]
 handler.tags = ["bebot"]
 handler.command = ["bebot", "serbot", "jadibot", "botclone", "clonebot"]
+handler.premium = true
 
 export default handler
 

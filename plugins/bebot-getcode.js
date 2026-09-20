@@ -78,5 +78,6 @@ let handler = async (m, { conn, usedPrefix, isOwner, isPrems }) => {
 handler.help = ['getcode']
 handler.tags = ['bebot']
 handler.command = ['getcode', "code"]
+handler.premium = true
 
 export default handler

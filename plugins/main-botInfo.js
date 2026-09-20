@@ -36,16 +36,8 @@ handler.command = ['info', 'infobot', 'botinfo']
 
 export default handler
 
-async function getUptime() {
-    if (process.send) {
-        process.send('uptime')
-        let _muptime = await new Promise(resolve => {
-            process.once('message', resolve)
-            setTimeout(() => resolve(0), 1000)
-        });
-        return formatUptime(_muptime * 1000)
-    }
-    return formatUptime(0)
+function getUptime() {
+  return formatUptime(process.uptime() * 1000)
 }
 
 function formatUptime(ms) {
