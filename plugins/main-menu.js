@@ -1,4 +1,4 @@
-import { promises, existsSync } from 'fs'
+import { promises } from 'fs'
 import { join } from 'path'
 import { xpRange } from '../lib/levelling.js'
 let tags = {
@@ -113,7 +113,7 @@ let handler = async (m, { conn, usedPrefix: _p, __dirname }) => {
     }
     text = text.replace(new RegExp(`%(${Object.keys(replace).sort((a, b) => b.length - a.length).join`|`})`, 'g'), (_, name) => '' + replace[name])
 
-    let pp = existsSync('./src/fg_logo.jpg') ? './src/fg_logo.jpg' : existsSync(join(__dirname, '../src/fg_logo.jpg')) ? join(__dirname, '../src/fg_logo.jpg') : global.fg_logo
+    let pp = join(__dirname, '../src/fg_logo.jpg')
 
     await conn.sendFile(m.chat, pp, 'menu.jpg', text.trim(), m, null, fwc)
 
