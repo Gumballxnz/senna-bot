@@ -1,44 +1,54 @@
-import { watchFile, unwatchFile } from 'fs'
+import { watchFile, unwatchFile, existsSync } from 'fs'
 import chalk from 'chalk'
 import { fileURLToPath } from 'url'
+import { join } from 'path'
 
-global.owner = [
-  ['258879116693', '🇯🇵𝙶𝙷𝙾𝚂𝚃 𝙶𝚄𝙼𝙱𝙰𝙻𝙻 ╰⁔╯', true],
-  ['159034049044504', '🇯🇵𝙶𝙷𝙾𝚂𝚃 𝙶𝚄𝙼𝙱𝙰𝙻𝙻 (LID) ╰⁔╯', true]
-]
+const USER_CWD = process.env.SENNA_CWD || process.cwd()
+const userConfigPath = join(USER_CWD, 'senna.config.js')
 
-global.mods = []
-global.prems = ['50999079501', '573166917092']
+let userCfg = {}
+if (existsSync(userConfigPath)) {
+    try {
+        const mod = await import(`file://${userConfigPath}`)
+        userCfg = mod.default || {}
+    } catch (e) {
+        console.warn(chalk.yellow(`⚠️  Erro ao carregar senna.config.js: ${e.message}`))
+    }
+}
+
+global.owner = userCfg.owner || []
+global.mods = userCfg.mods || []
+global.prems = userCfg.prems || []
 global.botNumber = []
+
 global.APIs = {
-
-  fg_ss: 'https://fg-ss.ddns.net',
-  fgmods: 'https://api.fgmods.xyz'
-
+    fg_ss: 'https://fg-ss.ddns.net',
+    fgmods: 'https://api.fgmods.xyz',
+    ...(userCfg.APIs || {})
 }
 global.APIKeys = {
-
-  'https://api.fgmods.xyz': 'shen'
+    'https://api.fgmods.xyz': 'shen',
+    ...(userCfg.APIKeys || {})
 }
 
-global.packname = 'DYLUX BOT S2┃ᴮᴼᵀ'
-global.author = '🇯🇵𝙶𝙷𝙾𝚂𝚃 𝙶𝚄𝙼𝙱𝙰𝙻𝙻 ╰⁔╯'
+global.packname = userCfg.packname || 'Senna Bot┃ᴮᴼᵀ'
+global.author = userCfg.author || ''
+global.botName = userCfg.botName || 'Senna Bot'
 
-global.botName = 'DYLUX BOT S2'
-global.fg_ig = 'https://www.instagram.com/wotersan1?igsh=MWluaWl0OXd5aHdlOA=='
+global.fg_ig = userCfg.ig || 'https://github.com/Gumballxnz/senna-bot'
 global.fg_sc = 'https://github.com/Gumballxnz'
-global.fg_yt = 'https://www.youtube.com/@wotersangumball'
-global.fg_pyp = 'romanalmirante23@gmail.com'
-global.fg_tt = 'https://www.tiktok.com/@gumballwotersan?_r=1&_t=ZS-95ZKTQCKz45'
-global.fg_logo = 'https://i.ibb.co/1zdz2j3/logo.jpg'
-global.fg_avatar = 'https://raw.githubusercontent.com/fg-error/fg-team/refs/heads/main/discord/avatar.png'
+global.fg_yt = userCfg.yt || ''
+global.fg_pyp = userCfg.email || ''
+global.fg_tt = userCfg.tt || ''
+global.fg_logo = userCfg.logo || 'https://i.ibb.co/1zdz2j3/logo.jpg'
+global.fg_avatar = userCfg.avatar || 'https://raw.githubusercontent.com/fg-error/fg-team/refs/heads/main/discord/avatar.png'
 
-global.id_canal = '120363177092661333@newsletter'
-global.canal_log = 'https://chat.whatsapp.com/FYoyZjNa2geKu5r20b3WS4?mode=gi_t'
-global.canal_logid = '120363398698937291@newsletter'
-global.fg_canal = 'https://chat.whatsapp.com/FYoyZjNa2geKu5r20b3WS4?mode=gi_t'
-global.fg_group = 'https://chat.whatsapp.com/FYoyZjNa2geKu5r20b3WS4?mode=gi_t'
-global.fg_gpnsfw = 'https://chat.whatsapp.com/FYoyZjNa2geKu5r20b3WS4?mode=gi_t'
+global.id_canal = userCfg.id_canal || ''
+global.canal_log = userCfg.canal_log || ''
+global.canal_logid = userCfg.canal_logid || ''
+global.fg_canal = userCfg.fg_canal || ''
+global.fg_group = userCfg.fg_group || ''
+global.fg_gpnsfw = userCfg.fg_gpnsfw || ''
 
 global.rwait = '⌛'
 global.dmoji = '🤭'
@@ -46,11 +56,11 @@ global.done = '✅'
 global.error = '❌'
 global.xmoji = '🔥'
 
-global.multiplier = 69
+global.multiplier = userCfg.multiplier || 69
 
 let file = fileURLToPath(import.meta.url)
 watchFile(file, () => {
-  unwatchFile(file)
-  console.log(chalk.redBright("Update 'config.js'"))
-  import(`${import.meta.url}?update=${Date.now()}`)
+    unwatchFile(file)
+    console.log(chalk.redBright("Update 'config.js'"))
+    import(`${import.meta.url}?update=${Date.now()}`)
 })

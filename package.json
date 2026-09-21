@@ -1,11 +1,30 @@
 {
   "name": "senna-bot",
   "version": "2.0.2",
-  "description": "Customizable WhatsApp Bot",
+  "description": "Modular WhatsApp Bot — run anywhere with npx senna-bot init",
   "main": "index.js",
   "type": "module",
+  "bin": {
+    "senna-bot": "bin/senna.js",
+    "senna": "bin/senna.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "files": [
+    "bin/",
+    "lib/",
+    "plugins/",
+    "src/",
+    "config.js",
+    "handler.js",
+    "index.js",
+    "main.js",
+    "pair.js"
+  ],
   "author": {
-    "name": "Gumball"
+    "name": "Gumball",
+    "url": "https://github.com/Gumballxnz"
   },
   "license": "GPL-3.0-or-later",
   "homepage": "https://github.com/Gumballxnz/senna-bot",
@@ -23,18 +42,20 @@
   },
   "scripts": {
     "start": "node --no-deprecation --max-old-space-size=512 index.js",
-    "test": "node test.js",
-    "dev": "nodemon index.js"
+    "dev": "nodemon index.js",
+    "publish:all": "node scripts/publish.js"
   },
   "keywords": [
     "baileys-md",
     "dylux-bot",
     "js-whatsapp",
     "multi-device",
+    "npx",
     "senna",
     "senna-bot",
     "termux-whatsapp-bot",
-    "whatsapp-bot"
+    "whatsapp-bot",
+    "whatsapp-bot-cli"
   ],
   "dependencies": {
     "@hapi/boom": "^9.1.4",

@@ -11,6 +11,26 @@ O **Senna Bot** é um assistente automatizado e modular para WhatsApp extremamen
 
 ---
 
+## ⚡ Início Rápido (via npx / npm / GitHub)
+
+Você pode iniciar e configurar o Senna Bot instantaneamente em qualquer pasta sem precisar clonar o repositório manualmente:
+
+```sh
+# 1. Configuração inicial guiada (wizard interativo)
+npx senna-bot init
+# Alternativas equivalentes:
+# npx @gumballxnz/senna-bot init
+# npx github:Gumballxnz/senna-bot init
+
+# 2. Conectar com o WhatsApp via Pairing Code
+npx senna-bot pair
+
+# 3. Iniciar o bot
+npx senna-bot start
+```
+
+---
+
 ## 🌟 Principais Funcionalidades
 
 O Senna Bot vem recheado de comandos separados por categorias:

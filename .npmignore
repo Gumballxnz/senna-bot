@@ -1,0 +1,17 @@
+sessions/
+bebots/
+database*.json
+senna.config.js
+*.key
+*.pem
+*.pem.*
+.env
+.env.*
+scratch/
+VPS_MEMORY.md
+ecosystem.config.cjs
+.agents/
+.git/
+node_modules/
+qr.png
+ssh-key-*.key

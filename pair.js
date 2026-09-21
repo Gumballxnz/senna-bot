@@ -13,8 +13,14 @@ import { fileURLToPath } from 'url'
 import qrcode from 'qrcode'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const authFolder = path.join(__dirname, 'sessions')
-const phoneNumber = '258871828596'
+const USER_CWD = process.env.SENNA_CWD || process.cwd()
+const authFolder = path.join(USER_CWD, 'sessions')
+const phoneNumber = process.env.SENNA_PAIR_NUMBER || ''
+
+if (!phoneNumber) {
+    console.error('❌ Número não configurado. Execute: npx senna-bot init')
+    process.exit(1)
+}
 
 function cleanAuth() {
     try {
@@ -62,8 +68,7 @@ async function startPairingLoop() {
 
         if (qr && !isPairingCompleted) {
             try {
-                await qrcode.toFile(path.join(__dirname, 'qr.png'), qr)
-                await qrcode.toFile('C:\\Users\\USER\\.gemini\\antigravity\\brain\\5f8c69e8-5198-4817-8283-67e46ea95e28\\qr_code.png', qr)
+                await qrcode.toFile(path.join(USER_CWD, 'qr.png'), qr)
             } catch (e) {}
         }
 
@@ -85,12 +90,13 @@ async function startPairingLoop() {
         if (connection === 'open') {
             isConnected = true
             console.log('\n==================================================')
-            console.log('🎉 BOT CONECTADO LOCALMENTE COM SUCESSO AO WHATSAPP!')
+            console.log('🎉 BOT CONECTADO COM SUCESSO AO WHATSAPP!')
             console.log('⏳ Gravando chaves de segurança no disco...')
             console.log('==================================================\n')
 
             setTimeout(() => {
-                console.log('✅ Sessão 100% gravada em ./sessions!')
+                console.log('✅ Sessão gravada em ./sessions!')
+                console.log('▶  Execute agora: npx senna-bot start')
                 process.exit(0)
             }, 10000)
         }

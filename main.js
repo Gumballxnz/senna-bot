@@ -52,11 +52,13 @@ const __dirname = global.__dirname(import.meta.url)
 global.opts = new Object(yargs(process.argv.slice(2)).exitProcess(false).parse())
 global.prefix = new RegExp('^[' + (opts['prefix'] || '.').replace(/[|\\{}()[\]^$+*?.\-\^]/g, '\\$&') + ']')
 
+const _dbBase = process.env.SENNA_CWD || process.cwd()
+
 global.db = new Low(
   /https?:\/\//.test(opts['db'] || '') ?
     new cloudDBAdapter(opts['db']) : /mongodb(\+srv)?:\/\//i.test(opts['db']) ?
       (opts['mongodbv2'] ? new mongoDBV2(opts['db']) : new mongoDB(opts['db'])) :
-      new JSONFile(`${opts._[0] ? opts._[0] + '_' : ''}database.json`)
+      new JSONFile(join(_dbBase, `${opts._[0] ? opts._[0] + '_' : ''}database.json`))
 )
 
 global.DATABASE = global.db
@@ -86,7 +88,7 @@ global.loadDatabase = async function loadDatabase() {
 }
 loadDatabase()
 
-global.authFile = path.join(__dirname, 'sessions')
+global.authFile = path.join(process.env.SENNA_CWD || process.cwd(), 'sessions')
 if (!fs.existsSync(global.authFile)) fs.mkdirSync(global.authFile, { recursive: true })
 const {state, saveState, saveCreds} = await useMultiFileAuthState(global.authFile)
 const msgRetryCounterMap = new Map()
@@ -151,12 +153,16 @@ async function requestPairing() {
     if (!global.conn || global.conn.authState?.creds?.registered || global.conn.authState?.creds?.me || isPairingRequested) return
     isPairingRequested = true
     if (!fs.existsSync(global.authFile)) fs.mkdirSync(global.authFile, { recursive: true })
-    const defaultPairingNumber = '258871828596'
+    const pairingNumber = process.env.SENNA_PAIR_NUMBER || global.owner?.[0]?.[0]
+    if (!pairingNumber) {
+        console.log('❌ Nenhum número configurado. Execute: npx senna-bot init')
+        return
+    }
     try {
-        let code = await global.conn.requestPairingCode(defaultPairingNumber)
+        let code = await global.conn.requestPairingCode(pairingNumber)
         code = code?.match(/.{1,4}/g)?.join("-") || code
         console.log('\n========================================')
-        console.log(`📱 NÚMERO DE PAREAMENTO: +${defaultPairingNumber}`)
+        console.log(`📱 NÚMERO DE PAREAMENTO: +${pairingNumber}`)
         console.log(`🔑 CÓDIGO DE PAREAMENTO: ${code}`)
         console.log('========================================\n')
     } catch (err) {
