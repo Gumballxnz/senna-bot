@@ -19,7 +19,7 @@ Você pode iniciar e configurar o Senna Bot instantaneamente em qualquer pasta s
 # 1. Configuração inicial guiada (wizard interativo)
 npx senna-bot init
 # Alternativas equivalentes:
-# npx @gumballxnz/senna-bot init
+# npx @gumballwotersan/senna-bot init
 # npx github:Gumballxnz/senna-bot init
 
 # 2. Conectar com o WhatsApp via Pairing Code
