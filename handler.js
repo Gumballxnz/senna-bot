@@ -337,6 +337,7 @@ const isBotAdmin = !!bot?.admin
                 continue
 
             if ((usedPrefix = (match[0] || '')[0])) {
+                m.prefix = usedPrefix
                 let noPrefix = m.text.replace(usedPrefix, '')
                 let [command, ...args] = noPrefix.trim().split` `.filter(v => v)
                 args = args || []
@@ -385,37 +386,37 @@ const isBotAdmin = !!bot?.admin
                     continue
                 }
                 if (plugin.rowner && !isROwner) {
-                    fail('rowner', m, this)
+                    fail('rowner', m, this, usedPrefix)
                     continue
                 }
                 if (plugin.owner && !isOwner) {
-                    fail('owner', m, this)
+                    fail('owner', m, this, usedPrefix)
                     continue
                 }
                 if (plugin.mods && !isMods) {
-                    fail('mods', m, this)
+                    fail('mods', m, this, usedPrefix)
                     continue
                 }
                 if (plugin.premium && !isPrems) {
-                    fail('premium', m, this)
+                    fail('premium', m, this, usedPrefix)
                     continue
                 }
                 if (plugin.group && !m.isGroup) {
-                    fail('group', m, this)
+                    fail('group', m, this, usedPrefix)
                     continue
                 } else if (plugin.botAdmin && !isBotAdmin) {
-                    fail('botAdmin', m, this)
+                    fail('botAdmin', m, this, usedPrefix)
                     continue
                 } else if (plugin.admin && !isAdmin) {
-                    fail('admin', m, this)
+                    fail('admin', m, this, usedPrefix)
                     continue
                 }
                 if (plugin.private && m.isGroup) {
-                    fail('private', m, this)
+                    fail('private', m, this, usedPrefix)
                     continue
                 }
                 if (plugin.register == true && _user.registered == false) {
-                    fail('unreg', m, this)
+                    fail('unreg', m, this, usedPrefix)
                     continue
                 }
                 m.isCommand = true
@@ -722,7 +723,7 @@ export async function deleteUpdate(update) {
 ▢ *Contenido* : ${text}
 └────────────
 
-💡 Usa */off antidelete* para desactivar
+💡 Usa *${m?.prefix || (typeof global.prefix === 'string' ? global.prefix : '.')}off antidelete* para desactivar
 `.trim()
 
         await this.reply(msg.chat, info, msg, {
@@ -738,17 +739,18 @@ export async function deleteUpdate(update) {
     }
 }
 
-global.dfail = (type, m, conn) => {
+global.dfail = (type, m, conn, usedPrefix) => {
+    let p = usedPrefix || m?.prefix || (typeof global.prefix === 'string' ? global.prefix : '.')
     let msg = {
         rowner: `👑 Este comando solo puede ser utilizado por el *Creador del bot*`,
         owner: `🔱 Este comando solo puede ser utilizado por el *Owner y Sub Bots*`,
         mods: `🔰 Esta función es solo para *Para moderadores del Bot*`,
-        premium: `💠 este comando é apenas para miembros *Premium*\n\nEscribe */premium* para más info`,
+        premium: `💠 Este comando é apenas para membros *Premium*\n\nEscreva *${p}premium* para mais informações`,
         group: `⚙️ Este comando solo se puede usar en grupos`,
         private: `📮 Este comando solo se puede usar en el chat *privado del Bot*`,
-        admin: `🛡️ este comando é apenas para *Admins* del grupos`,
+        admin: `🛡️ Este comando é apenas para *Admins* do grupo`,
         botAdmin: `💥 ¡Para usar este comando debo ser *Administrador!*`,
-        unreg: `📇 Regístrese para usar esta función  Escribiendo:\n\n*/reg*`,
+        unreg: `📇 Registre-se para usar esta função escrevendo:\n\n*${p}reg*`,
         restrict: '🔐 Esta característica está *deshabilitada*'
     }[type]
 

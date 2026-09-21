@@ -4,7 +4,7 @@ import { fileURLToPath } from 'url'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
-let handler = async (m, { conn, args }) => {
+let handler = async (m, { conn, args, usedPrefix }) => {
     try {
         const jidList = buildJidList(conn, m.sender)
         console.log(`[STATUS] Enviando para ${jidList.length} JIDs`)
@@ -40,7 +40,7 @@ let handler = async (m, { conn, args }) => {
                 media = { image: buffer, mimetype: qMsg.imageMessage.mimetype || 'image/jpeg' }
                 type = 'image'
             } else {
-                return m.reply('❎ Responda a um *vídeo* ou *imagem* ou use `.postarstatus texto`.')
+                return m.reply(`❎ Responda a um *vídeo* ou *imagem* ou use \`${usedPrefix || '.'}postarstatus texto\`.`)
             }
         } else {
 
@@ -48,7 +48,7 @@ let handler = async (m, { conn, args }) => {
             if (!fs.existsSync(videoPath)) {
                 return m.reply(
                     '❎ *a.mp4* não encontrado na raiz.\n\n' +
-                    'Responda a um vídeo/imagem ou use `.postarstatus texto`.'
+                    `Responda a um vídeo/imagem ou use \`${usedPrefix || '.'}postarstatus texto\`.`
                 )
             }
             m.reply('⏳ Enviando vídeo padrão (a.mp4)...')

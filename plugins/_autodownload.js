@@ -362,7 +362,8 @@ export async function before(m, { conn, isOwner }) {
             let data = await fg.mediafire(link)
             if (data.url) {
                 let size = parseInt(data.size)
-                if (size > 1024 && data.size.includes('MB') && !isOwner) return m.reply('✳️ Arquivo muito grande para AutoDL (Max 1GB). Use o comando .mediafire para limites de até 3GB.')
+                let prefix = typeof global.prefix === 'string' ? global.prefix : '.'
+                if (size > 1024 && data.size.includes('MB') && !isOwner) return m.reply(`✳️ Arquivo muito grande para AutoDL (Max 1GB). Use o comando ${prefix}mediafire para limites de até 3GB.`)
                 await conn.sendFile(m.chat, data.url, data.filename, `✅ *Auto DL: Mediafire*`, m, null, { asDocument: true })
                 m.react(done)
             }

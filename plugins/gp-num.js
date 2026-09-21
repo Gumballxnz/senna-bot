@@ -1,7 +1,7 @@
-let handler = async (m, { conn, args, participants }) => {
+let handler = async (m, { conn, args, participants, usedPrefix }) => {
 
   if (!args[0] || isNaN(args[0]))
-    return m.reply('✳️ Insira um prefijo válido\nExemplo: .num 54')
+    return m.reply(`✳️ Insira um prefijo válido\nExemplo: ${usedPrefix || '.'}num 54`)
 
   let prefix = args[0].replace(/\+/g, '')
 
