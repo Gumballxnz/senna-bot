@@ -43,7 +43,8 @@
   "scripts": {
     "start": "node --no-deprecation --max-old-space-size=512 index.js",
     "dev": "nodemon index.js",
-    "publish:all": "node scripts/publish.js"
+    "publish:all": "node scripts/publish.js",
+    "publish:github": "node scripts/publish-github-pkg.js"
   },
   "keywords": [
     "baileys-md",
