@@ -172,7 +172,8 @@ if (_user?.prem && _user?.premiumTime > 0 && Date.now() >= _user.premiumTime) {
 }
 
 const botNumber = this.user?.id?.replace(/:[0-9]+/g, '') || ''
-const sender = ((await conn.getJid(m.sender)) || m.sender).split(':')[0] + '@s.whatsapp.net'
+const rawSender = (await conn.getJid(m.sender, m.chat)) || m.sender || ''
+const sender = rawSender.endsWith('@s.whatsapp.net') ? rawSender : rawSender.split(':')[0].replace(/@.*$/, '') + '@s.whatsapp.net'
 const normalize = v => v.replace(/[^0-9]/g, '') + '@s.whatsapp.net'
 
 const isROwner = sender === botNumber || global.owner.some(v => {

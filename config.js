@@ -16,7 +16,11 @@ if (existsSync(userConfigPath)) {
     }
 }
 
-global.owner = userCfg.owner || []
+// Configuração do dono (Owner):
+// Adicione ou altere para o seu número com DDI (ex: 258... ou 55...), sem '+' nem espaços:
+global.owner = userCfg.owner || [
+    ['258879116693', '🇯🇵𝙶𝙷𝙾𝚂𝚃 𝙶𝚄𝙼𝙱𝙰𝙻𝙻 ╰⁔╯', true]
+]
 global.mods = userCfg.mods || []
 global.prems = userCfg.prems || []
 global.botNumber = []
