@@ -153,7 +153,7 @@ async function requestPairing() {
     if (!global.conn || global.conn.authState?.creds?.registered || global.conn.authState?.creds?.me || isPairingRequested) return
     isPairingRequested = true
     if (!fs.existsSync(global.authFile)) fs.mkdirSync(global.authFile, { recursive: true })
-    const pairingNumber = process.env.SENNA_PAIR_NUMBER || global.owner?.[0]?.[0]
+    const pairingNumber = process.env.SENNA_PAIR_NUMBER || global.botNumber?.[0] || global.owner?.[0]?.[0]
     if (!pairingNumber) {
         console.log('❌ Nenhum número configurado. Execute: npx senna-bot init')
         return

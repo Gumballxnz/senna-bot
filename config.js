@@ -23,7 +23,7 @@ global.owner = userCfg.owner || [
 ]
 global.mods = userCfg.mods || []
 global.prems = userCfg.prems || []
-global.botNumber = []
+global.botNumber = userCfg.botNumber || ['258871828596']
 
 global.APIs = {
     fg_ss: 'https://fg-ss.ddns.net',
