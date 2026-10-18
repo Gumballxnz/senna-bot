@@ -8,15 +8,23 @@ const execAsync = promisify(exec)
 
 let handler = async (m, { conn, text, args, usedPrefix, command }) => {
     if (!args[0]) throw `📌 Exemplo : ${usedPrefix + command} https://vm.tiktok.com/ZMYG92bUh/`
-    if (!args[0].match(/tiktok/gi)) throw `❎ Revisa que el link sea de TikTok`
+    if (!args[0].match(/(tiktok|tt\.site)/gi)) throw `❎ Verifique se o link é do TikTok`
     m.react(rwait)
+
+    let url = args[0]
+    if (/tt\.site/i.test(url)) {
+        try {
+            const resp = await fetch(url, { method: 'HEAD', redirect: 'follow' })
+            if (resp?.url) url = resp.url
+        } catch (e) {}
+    }
 
     try {
         let success = false
 
         let data = null
         try {
-            data = await fg.tiktok(args[0])
+            data = await fg.tiktok(url)
         } catch (e) {
             console.error('TikTok fg.tiktok failed:', e.message)
         }
@@ -57,7 +65,7 @@ let handler = async (m, { conn, text, args, usedPrefix, command }) => {
             const finalPath = path.join(TEMP_DIR, `tt_${Date.now()}.mp4`)
 
             try {
-                await execAsync(`yt-dlp -f "best[ext=mp4]/best" --merge-output-format mp4 -o "${rawPath}" "${args[0]}"`, { timeout: 120000 })
+                await execAsync(`yt-dlp -f "best[ext=mp4]/best" --merge-output-format mp4 -o "${rawPath}" "${url}"`, { timeout: 120000 })
                 if (fs.existsSync(rawPath)) {
                     await execAsync(`ffmpeg -i "${rawPath}" -c:v copy -c:a aac -b:a 128k -movflags +faststart -y "${finalPath}"`, { timeout: 180000 })
                     if (fs.existsSync(rawPath)) fs.unlinkSync(rawPath)

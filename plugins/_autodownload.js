@@ -17,7 +17,7 @@ export async function before(m, { conn, isOwner }) {
 
     if (global.prefix.test(text)) return false
 
-    const tiktokRegex = /https?:\/\/(www\.|v[mt]\.|vt\.)?tiktok\.com\/[^\s]*/i
+    const tiktokRegex = /https?:\/\/(www\.|v[mt]\.|vt\.)?tiktok\.com\/[^\s]*|https?:\/\/(www\.)?tt\.site\/[^\s]*/i
     const facebookRegex = /https?:\/\/(www\.|web\.|m\.)?(facebook\.com|fb\.watch|fb\.com)\/[^\s]*/i
     const instagramRegex = /https?:\/\/(www\.)?instagram\.com\/(p|reel|tv|stories)\/[^\s]+|https?:\/\/instagr\.am\/[^\s]+/i
     const mediafireRegex = /https?:\/\/(www\.)?mediafire\.com\/file\/[^\s]*/i
@@ -30,6 +30,12 @@ export async function before(m, { conn, isOwner }) {
 
     if (tiktokRegex.test(text)) {
         let link = text.match(tiktokRegex)[0]
+        if (/tt\.site/i.test(link)) {
+            try {
+                const resp = await fetch(link, { method: 'HEAD', redirect: 'follow' })
+                if (resp?.url) link = resp.url
+            } catch (e) {}
+        }
         found = true
         m.react(rwait)
         try {
