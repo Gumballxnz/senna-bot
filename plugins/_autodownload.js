@@ -42,7 +42,19 @@ export async function before(m, { conn, isOwner }) {
             let success = false
 
             try {
-                let data = await fg.tiktok(link)
+                let data = null
+                for (let attempt = 1; attempt <= 3; attempt++) {
+                    try {
+                        data = await fg.tiktok(link)
+                        if (data?.result?.play || data?.result?.images) break
+                    } catch (e) {
+                        console.error(`fg-senna TikTok attempt ${attempt} failed:`, e.message)
+                    }
+                    if (attempt < 3) {
+                        await new Promise(resolve => setTimeout(resolve, 1200))
+                    }
+                }
+
                 if (data && data.result && data.result.images) {
                     for (let img of data.result.images) {
                         await conn.sendFile(m.chat, img, 'tiktok.png', '', m, null, fwc)

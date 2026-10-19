@@ -23,10 +23,16 @@ let handler = async (m, { conn, text, args, usedPrefix, command }) => {
         let success = false
 
         let data = null
-        try {
-            data = await fg.tiktok(url)
-        } catch (e) {
-            console.error('TikTok fg.tiktok failed:', e.message)
+        for (let attempt = 1; attempt <= 3; attempt++) {
+            try {
+                data = await fg.tiktok(url)
+                if (data?.result?.play || data?.result?.images) break
+            } catch (e) {
+                console.error(`TikTok fg.tiktok attempt ${attempt} failed:`, e.message)
+            }
+            if (attempt < 3) {
+                await new Promise(resolve => setTimeout(resolve, 1200))
+            }
         }
 
         if (data && data.result) {
