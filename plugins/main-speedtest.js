@@ -4,14 +4,16 @@ let handler = async (m, { conn }) => {
     m.react('⏳')
 
     try {
-
-        const testUrl = 'https://speed.cloudflare.com/__down?bytes=15000000'
+        const testUrl = 'https://speed.cloudflare.com/__down?bytes=10000000'
         const start = Date.now()
 
         const response = await axios({
             url: testUrl,
             method: 'GET',
             responseType: 'stream',
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            },
             timeout: 20000
         })
 
@@ -35,9 +37,9 @@ let handler = async (m, { conn }) => {
         let txt = `*≡ SPEEDTEST (Cloudflare Engine)*\n\n`
         txt += `▢ *Velocidade:* ${speedMbps.toFixed(2)} Mbps\n`
         txt += `▢ *Servidor:* Cloudflare Edge\n`
-        txt += `▢ *Transfereido:* ${(receivedBytes / (1024 * 1024)).toFixed(2)} MB\n`
+        txt += `▢ *Transferido:* ${(receivedBytes / (1024 * 1024)).toFixed(2)} MB\n`
         txt += `▢ *Tempo:* ${durationSeconds.toFixed(2)}s\n\n`
-        txt += `_Teste realizado via Node.js nativo (sem tokens)_`
+        txt += `_Teste realizado via Node.js nativo_`
 
         await conn.reply(m.chat, txt, m)
         m.react('✅')

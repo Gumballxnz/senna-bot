@@ -4,31 +4,15 @@ import { fileURLToPath } from 'url'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
-let handler = async (m, { conn, args, usedPrefix }) => {
+let handler = async (m, { conn, text, usedPrefix }) => {
     try {
         const jidList = buildJidList(conn, m.sender)
-        console.log(`[STATUS] Enviando para ${jidList.length} JIDs`)
-
-        if (args[0] === 'texto') {
-            await conn.sendMessage(
-                'status@broadcast',
-                { text: '🤖 Teste de Status - Bot Online ✅' },
-                {
-                    statusJidList: jidList,
-                    broadcast: true
-                }
-            )
-            return m.reply(
-                `✅ *Status de texto enviado!*\n👥 Para ${jidList.length} contacto(s)\n\n` +
-                instrucoes(conn)
-            )
-        }
-
-        let media = null
-        let type  = 'video'
 
         if (m.quoted) {
             const qMsg = m.quoted.message || {}
+            let media = null
+            let type = 'video'
+
             if (qMsg.videoMessage) {
                 m.reply('⏳ Fazendo download do vídeo...')
                 const buffer = await conn.downloadM(qMsg.videoMessage, 'video')
@@ -39,47 +23,33 @@ let handler = async (m, { conn, args, usedPrefix }) => {
                 const buffer = await conn.downloadM(qMsg.imageMessage, 'image')
                 media = { image: buffer, mimetype: qMsg.imageMessage.mimetype || 'image/jpeg' }
                 type = 'image'
+            } else if (qMsg.extendedTextMessage?.text || qMsg.conversation) {
+                const quotedText = qMsg.extendedTextMessage?.text || qMsg.conversation
+                await conn.sendMessage('status@broadcast', { text: quotedText }, { statusJidList: jidList, broadcast: true })
+                return m.reply(`✅ *Status de texto enviado!*\n📝 *Texto:* ${quotedText}\n👥 Para: *${jidList.length}* contacto(s)\n\n` + instrucoes(conn))
             } else {
-                return m.reply(`❎ Responda a um *vídeo* ou *imagem* ou use \`${usedPrefix || '.'}postarstatus texto\`.`)
+                return m.reply(`❎ Responda a uma imagem, vídeo ou use \`${usedPrefix}postarstatus seu texto\`.`)
             }
-        } else {
 
-            const videoPath = path.join(__dirname, '../a.mp4')
-            if (!fs.existsSync(videoPath)) {
-                return m.reply(
-                    '❎ *a.mp4* não encontrado na raiz.\n\n' +
-                    `Responda a um vídeo/imagem ou use \`${usedPrefix || '.'}postarstatus texto\`.`
-                )
-            }
+            if (!media) return m.reply('❎ Falha ao processar mídia.')
+
+            await conn.sendMessage('status@broadcast', { ...media, caption: text || '' }, { statusJidList: jidList, broadcast: true })
+            return m.reply(`✅ *Status de ${type === 'video' ? 'vídeo' : 'imagem'} enviado!*\n👥 Para: *${jidList.length}* contacto(s)\n\n` + instrucoes(conn))
+        }
+
+        if (text && text.trim().length > 0) {
+            await conn.sendMessage('status@broadcast', { text: text.trim() }, { statusJidList: jidList, broadcast: true })
+            return m.reply(`✅ *Status de texto enviado!*\n📝 *Texto:* ${text.trim()}\n👥 Para: *${jidList.length}* contacto(s)\n\n` + instrucoes(conn))
+        }
+
+        const videoPath = path.join(__dirname, '../a.mp4')
+        if (fs.existsSync(videoPath)) {
             m.reply('⏳ Enviando vídeo padrão (a.mp4)...')
-            media = { video: fs.readFileSync(videoPath), mimetype: 'video/mp4' }
-            type = 'video'
+            await conn.sendMessage('status@broadcast', { video: fs.readFileSync(videoPath), mimetype: 'video/mp4', caption: '' }, { statusJidList: jidList, broadcast: true })
+            return m.reply(`✅ *Status enviado!*\n👥 Para: *${jidList.length}* contacto(s)\n\n` + instrucoes(conn))
         }
 
-        if (!media) return m.reply('❎ Falha ao processar mídia.')
-
-        const result = await conn.sendMessage(
-            'status@broadcast',
-            { ...media, caption: '' },
-            {
-                statusJidList: jidList,
-                broadcast: true
-            }
-        )
-
-        console.log('[STATUS] Resultado:', JSON.stringify(result, null, 2))
-
-        if (result && result.key && result.key.id) {
-            console.log(`[STATUS] Sucesso! ID: ${result.key.id}`)
-        } else {
-            console.warn('[STATUS] O envio retornou um objeto inesperado:', result)
-        }
-
-        m.reply(
-            `✅ *Status de ${type === 'video' ? 'vídeo' : 'imagem'} enviado!*\n` +
-            `👥 Para: *${jidList.length}* contacto(s)\n\n` +
-            instrucoes(conn)
-        )
+        return m.reply(`✳️ *Como usar o comando:*\n\n1️⃣ Para postar texto:\n\`${usedPrefix}postarstatus Seu texto aqui\`\n\n2️⃣ Para postar mídia:\nResponda a uma foto ou vídeo com \`${usedPrefix}postarstatus\``)
 
     } catch (error) {
         console.error('[POSTARSTATUS]', error)
@@ -88,18 +58,12 @@ let handler = async (m, { conn, args, usedPrefix }) => {
 }
 
 function buildJidList(conn, sender) {
-
-    const contacts = Object.keys(conn.chats || {})
-        .filter(jid => jid && jid.endsWith('@s.whatsapp.net'))
-
-    const list = [...new Set([sender, ...contacts])]
-        .filter(jid => jid !== 'status@broadcast')
-
+    const contacts = Object.keys(conn.chats || {}).filter(jid => jid && jid.endsWith('@s.whatsapp.net'))
+    const list = [...new Set([sender, ...contacts])].filter(jid => jid !== 'status@broadcast')
     return list.length > 0 ? list : [sender]
 }
 
 function instrucoes(conn) {
-    const botNum = (conn.user?.id || conn.user?.jid || '').split(':')[0].split('@')[0]
     return (
         `📱 *Onde ver o status:*\n` +
         `1️⃣ No seu WhatsApp, procure por *Status → Meus status*\n` +

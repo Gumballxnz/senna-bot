@@ -490,6 +490,20 @@ const isBotAdmin = !!bot?.admin
             }
 
         }
+
+        if (!m.plugin && !m.isCommand && m.text && global.prefix && global.prefix.test(m.text)) {
+            const prefixMatch = m.text.match(global.prefix)
+            const usedP = prefixMatch ? prefixMatch[0] : '.'
+            const rawAfter = m.text.slice(usedP.length).trim()
+            const candidateCmd = rawAfter.split(/\s+/)[0]?.toLowerCase()
+            if (candidateCmd && candidateCmd.length >= 2 && /^[a-zA-Z0-9_]+$/.test(candidateCmd)) {
+                let chat = global.db.data.chats[m.chat]
+                if (!chat?.isBanned) {
+                    m.react('❓')
+                    await this.reply(m.chat, `❎ O comando *${usedP}${candidateCmd}* não existe.\n\n💡 Digite *${usedP}menu* para ver a lista de comandos.`, m)
+                }
+            }
+        }
     } catch (e) {
         console.error(e)
     } finally {
