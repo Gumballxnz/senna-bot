@@ -13,17 +13,19 @@ let handler = async (m, { conn, args, text, usedPrefix, command }) => {
         if (!text.includes('xnxx.com')) return m.reply(`❎ Revisa que el link correcto`)
         try {
             let xn = await fg.xnxx(text)
-            conn.sendFile(m.chat, xn.url_dl, xn.title + '.mp4', `
+            if (!xn || !xn.url_dl) throw new Error('Falha ao extrair URL')
+            await conn.sendFile(m.chat, xn.url_dl, (xn.title || 'xnxx') + '.mp4', `
 ≡  *XNXX DL*
 
-*📌Titulo*: ${xn.title}
-*⌚Duracion:* ${xn.duration}
-*🎞️Calidad:* ${xn.quality}
+*📌Titulo*: ${xn.title || 'XNXX Video'}
+*⌚Duracion:* ${xn.duration || '--'}
+*🎞️Calidad:* ${xn.quality || '--'}
 `.trim(), m, false, { asDocument: chat.useDocument })
- m.react(done)
- } catch (e) {
-    m.reply(`🔴 Error `)
- }
+            m.react(done)
+        } catch (e) {
+            m.react('❌')
+            m.reply('🔴 Não foi possível obter o vídeo.')
+        }
     } else {
         try {
             let res = await fg.sxnxx(text)

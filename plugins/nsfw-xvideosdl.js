@@ -13,16 +13,18 @@ let handler = async (m, {conn, text, usedPrefix, command }) => {
 
         try {
             let xv = await fg.xvideos(text)
-            conn.sendFile(m.chat, xv.url_dl, xv.title + '.mp4', `
+            if (!xv || !xv.url_dl) throw new Error('Falha ao extrair URL')
+            await conn.sendFile(m.chat, xv.url_dl, (xv.title || 'xvideos') + '.mp4', `
 ≡  *XVIDEOS DL*
 
-*📌Titulo*: ${xv.title}
-*👍Likes* : ${xv.likes}
+*📌Titulo*: ${xv.title || 'Xvideos Video'}
+*👍Likes* : ${xv.likes || '--'}
 `.trim(), m, false, { asDocument: chat.useDocument })
-    m.react(done)
-    } catch (e) {
-        m.reply(`🔴 Error`)
-    }
+            m.react(done)
+        } catch (e) {
+            m.react('❌')
+            m.reply('🔴 Não foi possível obter o vídeo.')
+        }
     } else {
 
     try {

@@ -189,6 +189,10 @@ export async function before(m, { conn, isOwner }) {
                     console.error('❌ [AutoDL IG] yt-dlp falhou:', e.message)
                     try { if (fs.existsSync(rawPath)) fs.unlinkSync(rawPath) } catch(_) {}
                     try { if (fs.existsSync(finalPath)) fs.unlinkSync(finalPath) } catch(_) {}
+                    if (/isn't available to everyone|login required|confirm your age|age-restricted|private account/i.test(e.message)) {
+                        m.react('❌')
+                        return m.reply('🔒 Este conteúdo do Instagram possui restrição de privacidade ou idade e não pode ser baixado.')
+                    }
                 }
             }
 

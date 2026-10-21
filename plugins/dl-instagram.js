@@ -98,6 +98,10 @@ let handler = async (m, { conn, text, args, usedPrefix, command }) => {
     console.error('❌ [IGDL] yt-dlp falhou:', ee.message)
     try { if (fs.existsSync(rawPath)) fs.unlinkSync(rawPath) } catch(e) {}
     try { if (fs.existsSync(finalPath)) fs.unlinkSync(finalPath) } catch(e) {}
+    if (/isn't available to everyone|login required|confirm your age|age-restricted|private account/i.test(ee.message)) {
+      m.react('❌')
+      return m.reply('🔒 Este conteúdo do Instagram possui restrição de privacidade ou idade e não pode ser baixado.')
+    }
   }
 
   if (!success) {
