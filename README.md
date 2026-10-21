@@ -1,4 +1,8 @@
-# 🏎️ Senna Bot — WhatsApp Bot Inteligente & Modular
+<p align="center">
+  <img src="https://raw.githubusercontent.com/Gumballxnz/senna-bot/main/src/fg_logo.jpg" alt="Senna Bot" width="650" style="border-radius: 12px;"/>
+</p>
+
+# <p align="center">🏎️ Senna Bot — WhatsApp Bot Inteligente & Modular</p>
 
 <p align="center">
   <img src="https://komarev.com/ghpvc/?username=Gumballxnz&color=brightgreen" alt="Views" />
